@@ -11,7 +11,10 @@ export interface FqgateHttpClientOptions {
   baseUrl?: string;
   timeoutMs?: number;
   fetch?: typeof globalThis.fetch;
+  responseMode?: FqgateResponseMode;
 }
+
+export type FqgateResponseMode = "envelope" | "raw";
 
 interface FqgateResponse<T> {
   code: number;
@@ -23,7 +26,7 @@ interface FqgateResponse<T> {
 export class FqgateApiError extends Error {
   constructor(
     message: string,
-    readonly code: number,
+    readonly code: number | string,
     readonly httpStatus: number
   ) {
     super(message);
@@ -40,11 +43,13 @@ export class FqgateHttpClient {
   readonly connection: DataServiceConnection;
   private readonly timeoutMs: number;
   private readonly fetcher: typeof globalThis.fetch;
+  private readonly responseMode: FqgateResponseMode;
 
   constructor(options: FqgateHttpClientOptions = {}) {
     this.baseUrl = options.baseUrl ?? resolveFqgateBaseUrl();
     this.timeoutMs = options.timeoutMs ?? 15_000;
     this.fetcher = options.fetch ?? defaultFqgateFetch;
+    this.responseMode = options.responseMode ?? "envelope";
     this.connection = getFqgateConnectionMonitor({
       baseUrl: this.baseUrl,
       fetcher: this.fetcher
@@ -59,14 +64,19 @@ export class FqgateHttpClient {
     path: string,
     body: unknown,
     signal?: AbortSignal,
-    serverTimeoutMs?: number
+    serverTimeoutMs?: number,
+    headers?: HeadersInit
   ): Promise<T> {
+    const requestHeaders = new Headers(headers);
+    if (!requestHeaders.has("Content-Type")) {
+      requestHeaders.set("Content-Type", "application/json");
+    }
+    if (serverTimeoutMs) {
+      requestHeaders.set("X-Request-Timeout-Ms", String(serverTimeoutMs));
+    }
     return this.request<T>(path, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(serverTimeoutMs ? { "X-Request-Timeout-Ms": String(serverTimeoutMs) } : {})
-      },
+      headers: requestHeaders,
       body: JSON.stringify(body)
     }, signal);
   }
@@ -94,21 +104,28 @@ export class FqgateHttpClient {
         throw new Error("FQGate 返回了空响应，请稍后重试。");
       }
 
-      let payload: FqgateResponse<T>;
+      let payload: unknown;
       try {
-        payload = JSON.parse(responseText) as FqgateResponse<T>;
+        payload = JSON.parse(responseText) as unknown;
       } catch {
         if (response.status >= 500) throw new DataServiceUnavailableError();
         throw new Error(`FQGate 返回格式异常（HTTP ${response.status}）。`);
       }
-      if (!response.ok || payload.code !== 0) {
+
+      if (this.responseMode === "raw") {
+        if (!response.ok) throw rawResponseError(payload, response.status);
+        return payload as T;
+      }
+
+      const envelope = payload as FqgateResponse<T>;
+      if (!response.ok || envelope.code !== 0) {
         throw new FqgateApiError(
-          payload.message || `请求失败（HTTP ${response.status}）`,
-          payload.code,
+          envelope.message || `请求失败（HTTP ${response.status}）`,
+          envelope.code,
           response.status
         );
       }
-      return payload.data;
+      return envelope.data;
     } catch (error) {
       let normalizedError = error;
       if (error instanceof DOMException && error.name === "AbortError") {
@@ -125,6 +142,21 @@ export class FqgateHttpClient {
       signal?.removeEventListener("abort", abortFromCaller);
     }
   }
+}
+
+function rawResponseError(payload: unknown, httpStatus: number): FqgateApiError {
+  const body = payload && typeof payload === "object"
+    ? payload as Record<string, unknown>
+    : {};
+  const code = typeof body.code === "string" || typeof body.code === "number"
+    ? body.code
+    : "REQUEST_FAILED";
+  const message = typeof body.message === "string"
+    ? body.message
+    : typeof body.error === "string"
+      ? body.error
+      : `请求失败（HTTP ${httpStatus}）`;
+  return new FqgateApiError(message, code, httpStatus);
 }
 
 export function resolveFqgateBaseUrl(): string {
