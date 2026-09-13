@@ -15,7 +15,11 @@ const FQGATE_MCP_ROUTES = {
   "POST /v1/market/history/tick": "fqgate_market_tick",
   "POST /v1/market/level2/depth": "fqgate_market_level2_depth",
   "POST /v1/market/level2/transactions": "fqgate_market_level2_transactions",
+  "POST /v1/market/level2/orders": "fqgate_market_level2_orders",
+  "POST /v1/market/level2/cancellations/buy": "fqgate_market_level2_buy_cancellations",
+  "POST /v1/market/level2/cancellations/sell": "fqgate_market_level2_sell_cancellations",
   "POST /v1/market/realtime/quote": "fqgate_market_quote",
+  "POST /v1/market/realtime/cn": "fqgate_market_market_data_cn",
   "POST /v1/market/information/news": "fqgate_market_news",
   "POST /v1/market/catalog/search-symbols": "fqgate_market_search_symbols"
 } as const;

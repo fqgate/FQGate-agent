@@ -49,6 +49,9 @@ for (const configuredApp of config.apps) {
   if (html.includes("preview-layout") || html.includes("组件预览")) {
     throw new Error(`${app.file} 错误包含了本地组件预览壳。`);
   }
+  if (html.includes("/v1/market/stream")) {
+    throw new Error(`${app.file} 仍包含组件沙箱直连 FQGate WebSocket 的代码。`);
+  }
   if (["permissions", "appOnly", "csp", "connectDomains"].some((field) => field in app)) {
     throw new Error(`${app.id} 不能通过远程清单配置权限或网络访问。`);
   }

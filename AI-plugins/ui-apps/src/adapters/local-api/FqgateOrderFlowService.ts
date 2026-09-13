@@ -2,10 +2,6 @@ import type {
   MarketSecurity,
   OrderFlowDataMode,
   OrderFlowFallbackReason,
-  OrderFlowQuote,
-  OrderFlowRecord,
-  OrderFlowRecordKind,
-  OrderFlowSide,
   OrderFlowWatchConnection,
   OrderFlowWatchListener,
   OrderFlowWatchService
@@ -17,6 +13,8 @@ import {
   toFqgateWebSocketUrl,
   type FqgateHttpClientOptions
 } from "./FqgateHttpClient";
+import { parseOrderFlowQuote, parseOrderFlowRecords } from "./FqgateOrderFlowParsers";
+import { FqgateWebSocketTransport } from "./FqgateWebSocketTransport";
 
 interface FqgateMarketHealth {
   status: string;
@@ -37,7 +35,6 @@ interface FqgateStreamMessage {
 }
 
 type FqgateStreamKind = "quote" | "order_detail" | "buy_cancel" | "sell_cancel";
-type JsonObject = Record<string, unknown>;
 
 export interface FqgateOrderFlowServiceOptions extends FqgateHttpClientOptions {
   webSocketFactory?: (url: string) => WebSocket;
@@ -108,7 +105,7 @@ export class FqgateOrderFlowService implements OrderFlowWatchService {
         securities: [{ market: security.market, code: security.code }],
         fields: [5, 55, 10, 6]
       }, signal);
-      const quote = parseQuote(data);
+      const quote = parseOrderFlowQuote(data);
       if (quote && !signal?.aborted) listener.onQuote(quote);
     } catch {
       // WebSocket 仍是主数据通道；快照失败时继续等待下一次实时推送。
@@ -117,85 +114,50 @@ export class FqgateOrderFlowService implements OrderFlowWatchService {
 }
 
 class FqgateOrderFlowConnection implements OrderFlowWatchConnection {
-  private socket?: WebSocket;
-  private manuallyClosed = false;
+  private readonly transport: FqgateWebSocketTransport;
   private mode: OrderFlowDataMode;
   private readonly subscriptionKinds = new Map<number, FqgateStreamKind>();
 
   constructor(
-    private readonly url: string,
+    url: string,
     private readonly security: MarketSecurity,
     initialMode: OrderFlowDataMode,
     private readonly listener: OrderFlowWatchListener,
-    private readonly webSocketFactory: (url: string) => WebSocket,
-    private readonly dataServiceConnection: DataServiceConnection
+    webSocketFactory: (url: string) => WebSocket,
+    dataServiceConnection: DataServiceConnection
   ) {
     this.mode = initialMode;
-  }
-
-  open(signal?: AbortSignal): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (signal?.aborted) {
-        reject(abortError());
-        return;
-      }
-
-      let settled = false;
-      const socket = this.webSocketFactory(this.url);
-      this.socket = socket;
-
-      const handleAbort = (): void => {
-        this.manuallyClosed = true;
-        socket.close(1000, "panel hidden");
-        if (!settled) {
-          settled = true;
-          reject(abortError());
-        }
-      };
-      signal?.addEventListener("abort", handleAbort, { once: true });
-
-      socket.onopen = () => {
-        if (signal?.aborted) {
-          handleAbort();
-          return;
-        }
+    this.transport = new FqgateWebSocketTransport({
+      url,
+      connection: dataServiceConnection,
+      webSocketFactory,
+      heartbeatMs: 20_000,
+      failureMessage: "实时数据接口连接失败，请确认 FQGate 正在运行并已完成行情登录。",
+      closedMessage: "实时数据接口已断开，请确认 FQGate 正在运行。",
+      onOpen: () => {
         this.subscribeInitialChannels();
         this.listener.onConnectionState("connected", "实时数据已连接");
-        if (!settled) {
-          settled = true;
-          resolve();
-        }
-      };
-      socket.onmessage = (event) => this.handleMessage(event.data);
-      socket.onerror = () => {
-        const message = "实时数据接口连接失败，请确认 FQGate 正在运行并已完成行情登录。";
-        this.dataServiceConnection.reportUnavailable();
-        this.listener.onError(message);
-        if (!settled) {
-          settled = true;
-          reject(new Error(message));
-        }
-      };
-      socket.onclose = () => {
-        signal?.removeEventListener("abort", handleAbort);
-        if (!this.manuallyClosed) this.dataServiceConnection.reportUnavailable();
-        this.listener.onConnectionState("closed", this.manuallyClosed ? "实时连接已暂停" : "实时连接已断开");
-        if (!settled) {
-          settled = true;
-          reject(new Error("实时数据接口已断开，请确认 FQGate 正在运行。"));
-        } else if (!this.manuallyClosed) {
+      },
+      onMessage: (data) => this.handleMessage(data),
+      onError: (error) => this.listener.onError(error.message),
+      onClose: (manuallyClosed, opened) => {
+        this.listener.onConnectionState(
+          "closed",
+          manuallyClosed ? "实时连接已暂停" : "实时连接已断开"
+        );
+        if (opened && !manuallyClosed) {
           this.listener.onError("实时数据接口已断开，请确认 FQGate 正在运行后重试。");
         }
-      };
+      }
     });
   }
 
+  open(signal?: AbortSignal): Promise<void> {
+    return this.transport.open(signal);
+  }
+
   close(): void {
-    this.manuallyClosed = true;
-    const socket = this.socket;
-    if (!socket) return;
-    if (socket.readyState === 0 || socket.readyState === 1) socket.close(1000, "panel hidden");
-    this.socket = undefined;
+    this.transport.close();
   }
 
   private subscribeInitialChannels(): void {
@@ -223,7 +185,7 @@ class FqgateOrderFlowConnection implements OrderFlowWatchConnection {
   }
 
   private send(payload: unknown): void {
-    if (this.socket?.readyState === 1) this.socket.send(JSON.stringify(payload));
+    this.transport.send(payload);
   }
 
   private handleMessage(raw: unknown): void {
@@ -245,14 +207,14 @@ class FqgateOrderFlowConnection implements OrderFlowWatchConnection {
     }
     if (message.event !== "data" || !message.kind || !message.data) return;
     if (message.kind === "quote") {
-      const quote = parseQuote(message.data);
+      const quote = parseOrderFlowQuote(message.data);
       if (quote) this.listener.onQuote(quote);
       return;
     }
     if (this.mode !== "level2") return;
 
-    const kind: OrderFlowRecordKind = message.kind === "order_detail" ? "order" : "cancel";
-    const records = parseLevel2Records(message.data, kind, message.kind);
+    const kind = message.kind === "order_detail" ? "order" : "cancel";
+    const records = parseOrderFlowRecords(message.data, kind, message.kind);
     if (records.length) this.listener.onRecords(records);
   }
 
@@ -274,116 +236,6 @@ class FqgateOrderFlowConnection implements OrderFlowWatchConnection {
     this.listener.onModeChange({ mode: "basic", fallbackReason: "permission_denied" });
     this.listener.onConnectionState("connected", "已回退到普通实时行情");
   }
-}
-
-function parseQuote(data: unknown): OrderFlowQuote | undefined {
-  const record = firstRawRecord(data);
-  if (!record) return undefined;
-  return {
-    latestPrice: fieldNumber(record, "10"),
-    previousClose: fieldNumber(record, "6"),
-    updatedAt: Date.now()
-  };
-}
-
-function parseLevel2Records(
-  data: unknown,
-  kind: OrderFlowRecordKind,
-  streamKind: FqgateStreamKind
-): OrderFlowRecord[] {
-  const semanticBatches = asObject(data)?.semantic_records;
-  if (!Array.isArray(semanticBatches)) return [];
-  const records: OrderFlowRecord[] = [];
-  for (const batch of semanticBatches) {
-    if (!Array.isArray(batch)) continue;
-    for (const item of batch) {
-      const semantic = asObject(item);
-      const values = asObject(semantic?.values);
-      const derived = asObject(semantic?.derived);
-      if (!values || !derived) continue;
-      const price = fieldValueNumber(values.price)
-        ?? fieldValueNumber(values.latest_price);
-      const volume = fieldValueNumber(values.volume);
-      const amount = fieldValueNumber(values.amount)
-        ?? (price !== null && volume !== null ? price * volume : null);
-      const timestamp = derivedTimestamp(derived)
-        ?? strictTimestamp(fieldValueNumber(values.cancel_time))
-        ?? strictTimestamp(fieldValueNumber(values.order_time));
-      const orderTimestamp = kind === "cancel"
-        ? strictTimestamp(fieldValueNumber(values.request_time))
-        : null;
-      const side = derivedSide(derived, streamKind);
-      const orderNumber = fieldValue(values.order_no);
-      records.push({
-        id: [kind, orderNumber, timestamp, price, volume].join(":"),
-        kind,
-        side,
-        timestamp,
-        price,
-        volume,
-        amount,
-        orderTimestamp
-      });
-    }
-  }
-  return records;
-}
-
-function firstRawRecord(data: unknown): JsonObject | undefined {
-  const batches = asObject(data)?.records;
-  if (!Array.isArray(batches)) return undefined;
-  for (const batch of batches) {
-    if (!Array.isArray(batch)) continue;
-    for (const record of batch) {
-      const object = asObject(record);
-      if (object) return object;
-    }
-  }
-  return undefined;
-}
-
-function fieldNumber(record: JsonObject, fieldId: string): number | null {
-  return fieldValueNumber(record[fieldId]);
-}
-
-function fieldValue(value: unknown): string | number | null {
-  const object = asObject(value);
-  const payload = object && "value" in object ? object.value : value;
-  return typeof payload === "string" || typeof payload === "number" ? payload : null;
-}
-
-function fieldValueNumber(value: unknown): number | null {
-  const payload = fieldValue(value);
-  if (payload === null) return null;
-  const number = typeof payload === "number" ? payload : Number(payload);
-  return Number.isFinite(number) ? number : null;
-}
-
-function derivedTimestamp(derived: JsonObject): number | null {
-  const timestamp = asObject(derived.timestamp);
-  return strictTimestamp(typeof timestamp?.unix_milliseconds === "number"
-    ? timestamp.unix_milliseconds
-    : null);
-}
-
-function strictTimestamp(value: number | null): number | null {
-  if (value === null) return null;
-  if (value >= 1_000_000_000_000) return value;
-  if (value >= 1_000_000_000) return value * 1_000;
-  return null;
-}
-
-function derivedSide(derived: JsonObject, streamKind: FqgateStreamKind): OrderFlowSide {
-  if (streamKind === "buy_cancel") return "buy";
-  if (streamKind === "sell_cancel") return "sell";
-  const side = derived.side;
-  return side === "buy" || side === "sell" ? side : "unknown";
-}
-
-function asObject(value: unknown): JsonObject | undefined {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? value as JsonObject
-    : undefined;
 }
 
 function fallbackReasonFromHealth(permission: boolean | null): OrderFlowFallbackReason | undefined {

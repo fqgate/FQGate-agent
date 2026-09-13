@@ -10,7 +10,7 @@
     "build:mcp-apps": "npm run typecheck && node scripts/build-mcp-apps.mjs",
     "dev:publish": "npm run typecheck && node --watch-preserve-output --watch-path=src --watch-path=mcp-apps scripts/dev-publish-mcp-apps.mjs",
     "release:mcp-apps": "node scripts/release-mcp-apps.mjs",
-    "test:mcp-apps": "tsx tests/openai-component-bridge.qa.ts && tsx tests/mcp-fqgate-fetch.qa.ts && npm run build:mcp-apps && node tests/mcp-apps-build.qa.mjs && node tests/mcp-apps-release.qa.mjs",
+    "test:mcp-apps": "tsx tests/openai-component-bridge.qa.ts && tsx tests/mcp-fqgate-fetch.qa.ts && tsx tests/mcp-polling-connection.qa.ts && npm run build:mcp-apps && node tests/mcp-apps-build.qa.mjs && node tests/mcp-apps-release.qa.mjs",
     "test:ui": "npm run test:ui:login && npm run test:ui:candle && npm run test:ui:information && npm run test:ui:market-quotes && npm run test:ui:order-flow",
     "test:ui:candle": "tsx tests/default-candle-interval.qa.ts && tsx tests/security-code.qa.ts && node tests/candle-preview.qa.mjs && node tests/candle-realtime.qa.mjs",
     "test:security-code": "tsx tests/security-code.qa.ts",

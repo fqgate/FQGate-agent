@@ -1,5 +1,5 @@
-import { McpFqgateFetch } from "@/adapters/mcp-app";
-import { FqgateLoginService, FqgateOrderFlowService } from "@/adapters/local-api";
+import { McpFqgateFetch, McpPollingOrderFlowService } from "@/adapters/mcp-app";
+import { FqgateLoginService } from "@/adapters/local-api";
 import OrderFlowWatchPanel from "@/components/order-flow/OrderFlowWatchPanel.vue";
 import {
   FQGATE_LOOPBACK_URL,
@@ -15,7 +15,7 @@ async function main(): Promise<void> {
   const bridge = new McpFqgateFetch(runtime);
   const serviceOptions = { baseUrl: FQGATE_LOOPBACK_URL, fetch: bridge.fetch };
   mountSharedComponent(OrderFlowWatchPanel, {
-    service: new FqgateOrderFlowService(serviceOptions),
+    service: new McpPollingOrderFlowService(serviceOptions),
     loginService: new FqgateLoginService(serviceOptions),
     initialSecurity,
     active: true

@@ -4,7 +4,6 @@ import type {
   MarketQuotePatch,
   MarketQuoteService,
   MarketQuoteSubscription,
-  QuoteConnectionState,
   QuoteStreamHandlers
 } from "@/components/market-quotes/contracts";
 import { marketSecurityKey } from "@/components/market-quotes/contracts";
@@ -13,6 +12,7 @@ import {
   type FqgateHttpClientOptions,
   toFqgateWebSocketUrl
 } from "./FqgateHttpClient";
+import { FqgateWebSocketTransport } from "./FqgateWebSocketTransport";
 
 type RawRecord = Record<string, unknown>;
 
@@ -36,16 +36,14 @@ const QUOTE_FIELDS = [5, 55, 10, 6, 7, 8, 9, 13, 19, 48, 49];
 const MAX_TREND_POINTS = 64;
 const TREND_CONCURRENCY = 4;
 
-/** 使用 FQGate 批量快照和标准 WebSocket 订阅提供多股实时行情。 */
-export class FqgateMarketQuoteService implements MarketQuoteService {
-  readonly kind = "fqgate-local-api";
+/** 只提供快照读取，供 WebSocket 页面和 MCP Apps 轮询共同复用。 */
+export class FqgateMarketQuoteSnapshotService {
+  readonly kind: string = "fqgate-market-quote-snapshot";
 
-  private readonly client: FqgateHttpClient;
-  private readonly webSocketFactory: (url: string) => WebSocket;
+  protected readonly client: FqgateHttpClient;
 
-  constructor(options: FqgateMarketQuoteServiceOptions = {}) {
+  constructor(options: FqgateHttpClientOptions = {}) {
     this.client = new FqgateHttpClient(options);
-    this.webSocketFactory = options.webSocketFactory ?? ((url) => new WebSocket(url));
   }
 
   get connection() {
@@ -99,6 +97,20 @@ export class FqgateMarketQuoteService implements MarketQuoteService {
     await Promise.all(workers);
     return result;
   }
+}
+
+/** 使用 FQGate 批量快照和标准 WebSocket 订阅提供多股实时行情。 */
+export class FqgateMarketQuoteService
+  extends FqgateMarketQuoteSnapshotService
+  implements MarketQuoteService {
+  override readonly kind = "fqgate-local-api";
+
+  private readonly webSocketFactory: (url: string) => WebSocket;
+
+  constructor(options: FqgateMarketQuoteServiceOptions = {}) {
+    super(options);
+    this.webSocketFactory = options.webSocketFactory ?? ((url) => new WebSocket(url));
+  }
 
   subscribe(
     securities: readonly MarketSecurity[],
@@ -115,61 +127,43 @@ export class FqgateMarketQuoteService implements MarketQuoteService {
 }
 
 class FqgateQuoteSubscription implements MarketQuoteSubscription {
-  private socket?: WebSocket;
-  private pingTimer?: number;
+  private readonly transport: FqgateWebSocketTransport;
   private closed = false;
 
   constructor(
-    private readonly url: string,
+    url: string,
     private readonly securities: MarketSecurity[],
     private readonly handlers: QuoteStreamHandlers,
-    private readonly createWebSocket: (url: string) => WebSocket,
-    private readonly connection: DataServiceConnection
+    createWebSocket: (url: string) => WebSocket,
+    connection: DataServiceConnection
   ) {
-    this.open("connecting");
+    this.handlers.onStateChange("connecting");
+    this.transport = new FqgateWebSocketTransport({
+      url,
+      connection,
+      webSocketFactory: createWebSocket,
+      heartbeatMs: 15_000,
+      onOpen: () => {
+        if (this.closed) return;
+        this.handlers.onStateChange("connected");
+        for (const { market, code } of this.securities) {
+          this.transport.send({ action: "subscribe", kind: "quote", market, code });
+        }
+      },
+      onMessage: (data) => this.handleMessage(data),
+      onError: () => this.handlers.onError(new Error("实时行情连接异常，正在尝试恢复。")),
+      onClose: (manuallyClosed) => {
+        if (!this.closed && !manuallyClosed) this.handlers.onStateChange("reconnecting");
+      }
+    });
+    void this.transport.open().catch(() => undefined);
   }
 
   close(): void {
-    this.closed = true;
-    if (this.pingTimer !== undefined) window.clearInterval(this.pingTimer);
-    this.socket?.close();
-    this.handlers.onStateChange("closed");
-  }
-
-  private open(state: QuoteConnectionState): void {
     if (this.closed) return;
-    this.handlers.onStateChange(state);
-    const socket = this.createWebSocket(this.url);
-    this.socket = socket;
-    socket.addEventListener("open", () => {
-      if (this.closed || this.socket !== socket) return;
-      this.handlers.onStateChange("connected");
-      for (const { market, code } of this.securities) {
-        socket.send(JSON.stringify({ action: "subscribe", kind: "quote", market, code }));
-      }
-      this.pingTimer = window.setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ action: "ping" }));
-        }
-      }, 15_000);
-    });
-    socket.addEventListener("message", (event) => this.handleMessage(event.data));
-    socket.addEventListener("error", () => {
-      this.connection.reportUnavailable();
-      this.handlers.onError(new Error("实时行情连接异常，正在尝试恢复。"));
-      if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN) {
-        socket.close();
-      }
-    });
-    socket.addEventListener("close", () => {
-      if (this.pingTimer !== undefined) window.clearInterval(this.pingTimer);
-      this.pingTimer = undefined;
-      if (!this.closed && this.socket === socket) {
-        this.socket = undefined;
-        this.handlers.onStateChange("reconnecting");
-        this.connection.reportUnavailable();
-      }
-    });
+    this.closed = true;
+    this.transport.close();
+    this.handlers.onStateChange("closed");
   }
 
   private handleMessage(raw: unknown): void {

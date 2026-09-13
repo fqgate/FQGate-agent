@@ -249,6 +249,7 @@ async function startRealtimeConnection(): Promise<void> {
   const listener: MarketRealtimeListener = {
     onConnectionState: (state) => {
       if (version !== realtimeVersion) return;
+      if (state === "connected") streamError.value = "";
       if (state === "closed") {
         panelState.value = props.realtimeService.connection.getSnapshot().state === "reconnecting"
           ? "reconnecting"

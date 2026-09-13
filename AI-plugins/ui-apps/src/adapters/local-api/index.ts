@@ -2,13 +2,15 @@ export { FqgateCandleService, type FqgateCandleServiceOptions } from "./FqgateCa
 export { FqgateSecuritySearchService } from "./FqgateSecuritySearchService";
 export {
   FqgateMarketQuoteService,
+  FqgateMarketQuoteSnapshotService,
   type FqgateMarketQuoteServiceOptions
 } from "./FqgateMarketQuoteService";
 export { FqgateLoginService, type FqgateLoginServiceOptions } from "./FqgateLoginService";
 export {
   FqgateApiError,
   FqgateHttpClient,
-  type FqgateHttpClientOptions
+  type FqgateHttpClientOptions,
+  type FqgateResponseMode
 } from "./FqgateHttpClient";
 export {
   FqgateInformationService,
@@ -26,3 +28,7 @@ export {
   FqgateMarketRealtimeService,
   type FqgateMarketRealtimeServiceOptions
 } from "./FqgateMarketRealtimeService";
+export {
+  FqgateWebSocketTransport,
+  type FqgateWebSocketTransportOptions
+} from "./FqgateWebSocketTransport";

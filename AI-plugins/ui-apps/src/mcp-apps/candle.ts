@@ -1,9 +1,8 @@
-import { McpFqgateFetch } from "@/adapters/mcp-app";
+import { McpFqgateFetch, McpPollingMarketRealtimeService } from "@/adapters/mcp-app";
 import {
   FqgateCandleService,
   FqgateSecuritySearchService,
-  FqgateMarketDepthService,
-  FqgateMarketRealtimeService
+  FqgateMarketDepthService
 } from "@/adapters/local-api";
 import CandlePanel from "@/components/candle/CandlePanel.vue";
 import type { KlineAdjustment, KlineInterval } from "@/shared/contracts";
@@ -31,7 +30,7 @@ async function main(): Promise<void> {
     service: new FqgateCandleService(serviceOptions),
     securityService: new FqgateSecuritySearchService(serviceOptions),
     marketDepthService: new FqgateMarketDepthService(serviceOptions),
-    realtimeService: new FqgateMarketRealtimeService(serviceOptions),
+    realtimeService: new McpPollingMarketRealtimeService(serviceOptions),
     security,
     initialInterval: readInterval(argumentsValue?.interval),
     count: positiveInteger(argumentsValue?.count) ?? 160,

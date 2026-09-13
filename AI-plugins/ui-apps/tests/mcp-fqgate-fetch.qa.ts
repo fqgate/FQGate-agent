@@ -125,5 +125,20 @@ assert.equal(
   "fqgate_market_news",
   "资讯接口应映射到 FQGate news 工具"
 );
+assert.equal(
+  resolveFqgateMcpToolName("POST", "/v1/market/level2/orders"),
+  "fqgate_market_level2_orders",
+  "逐笔委托轮询应映射到 FQGate Level-2 工具"
+);
+assert.equal(
+  resolveFqgateMcpToolName("POST", "/v1/market/level2/cancellations/buy"),
+  "fqgate_market_level2_buy_cancellations",
+  "买入撤单轮询应映射到 FQGate Level-2 工具"
+);
+assert.equal(
+  resolveFqgateMcpToolName("POST", "/v1/market/level2/cancellations/sell"),
+  "fqgate_market_level2_sell_cancellations",
+  "卖出撤单轮询应映射到 FQGate Level-2 工具"
+);
 
 process.stdout.write("MCP 工具首屏结果复用验收通过。\n");

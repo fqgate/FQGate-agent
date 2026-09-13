@@ -220,7 +220,7 @@ export interface InformationService extends UiDataSource {
 export type OrderFlowDataMode = MarketDepthMode;
 export type OrderFlowSide = MarketDepthSide;
 export type OrderFlowRecordKind = "order" | "cancel";
-export type OrderFlowConnectionState = "connecting" | "connected" | "closed";
+export type OrderFlowConnectionState = "connecting" | "connected" | "reconnecting" | "closed";
 export type OrderFlowFallbackReason = MarketDepthFallbackReason;
 
 export interface OrderFlowQuote {

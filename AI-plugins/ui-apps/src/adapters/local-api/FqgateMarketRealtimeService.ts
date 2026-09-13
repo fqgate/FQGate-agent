@@ -21,6 +21,7 @@ import {
   parseRealtimeQuote,
   type FqgateMarketDataPayload
 } from "./FqgateMarketDataParsers";
+import { FqgateWebSocketTransport } from "./FqgateWebSocketTransport";
 
 interface FqgateMarketHealth {
   connected: boolean;
@@ -98,93 +99,50 @@ export class FqgateMarketRealtimeService implements MarketRealtimeService {
 }
 
 class FqgateMarketRealtimeConnection implements MarketRealtimeConnection {
-  private socket?: WebSocket;
-  private manuallyClosed = false;
+  private readonly transport: FqgateWebSocketTransport;
   private mode: MarketDepthMode;
-  private pingTimer?: number;
   private readonly subscriptionKinds = new Map<number, FqgateStreamKind>();
 
   constructor(
-    private readonly url: string,
+    url: string,
     private readonly security: MarketSecurity,
     initialMode: MarketDepthMode,
     private readonly listener: MarketRealtimeListener,
-    private readonly webSocketFactory: (url: string) => WebSocket,
-    private readonly dataServiceConnection: DataServiceConnection
+    webSocketFactory: (url: string) => WebSocket,
+    dataServiceConnection: DataServiceConnection
   ) {
     this.mode = initialMode;
-  }
-
-  open(signal?: AbortSignal): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (signal?.aborted) {
-        reject(abortError());
-        return;
-      }
-
-      let settled = false;
-      const socket = this.webSocketFactory(this.url);
-      this.socket = socket;
-      const handleAbort = (): void => {
-        this.manuallyClosed = true;
-        this.stopHeartbeat();
-        if (socket.readyState === 0 || socket.readyState === 1) socket.close(1000, "panel hidden");
-        if (!settled) {
-          settled = true;
-          reject(abortError());
-        }
-      };
-      signal?.addEventListener("abort", handleAbort, { once: true });
-
-      socket.onopen = () => {
-        if (signal?.aborted) {
-          handleAbort();
-          return;
-        }
+    this.transport = new FqgateWebSocketTransport({
+      url,
+      connection: dataServiceConnection,
+      webSocketFactory,
+      heartbeatMs: 20_000,
+      failureMessage: "实时行情连接失败，请确认 FQGate 正在运行并已完成行情登录。",
+      closedMessage: "实时行情已断开，请确认 FQGate 正在运行。",
+      onOpen: () => {
         this.subscribeInitialChannels();
-        this.startHeartbeat();
         this.listener.onConnectionState("connected", "实时行情已连接");
-        if (!settled) {
-          settled = true;
-          resolve();
-        }
-      };
-      socket.onmessage = (event) => this.handleMessage(event.data);
-      socket.onerror = () => {
-        const message = "实时行情连接失败，请确认 FQGate 正在运行并已完成行情登录。";
-        this.dataServiceConnection.reportUnavailable();
-        this.listener.onError(message);
-        if (!settled) {
-          settled = true;
-          reject(new Error(message));
-        }
-      };
-      socket.onclose = () => {
-        signal?.removeEventListener("abort", handleAbort);
-        this.stopHeartbeat();
-        if (!this.manuallyClosed) this.dataServiceConnection.reportUnavailable();
+      },
+      onMessage: (data) => this.handleMessage(data),
+      onError: (error) => this.listener.onError(error.message),
+      onClose: (manuallyClosed, opened) => {
         this.listener.onConnectionState(
           "closed",
-          this.manuallyClosed ? "实时行情已暂停" : "实时行情已断开"
+          manuallyClosed ? "实时行情已暂停" : "实时行情已断开"
         );
-        if (!settled) {
-          settled = true;
-          reject(new Error("实时行情已断开，请确认 FQGate 正在运行。"));
-        } else if (!this.manuallyClosed) {
+        if (opened && !manuallyClosed) {
           this.listener.onError("实时行情已断开，正在等待数据服务恢复。");
         }
-      };
+      }
     });
   }
 
+  open(signal?: AbortSignal): Promise<void> {
+    return this.transport.open(signal);
+  }
+
   close(): void {
-    this.manuallyClosed = true;
-    this.stopHeartbeat();
-    const socket = this.socket;
-    if (socket && (socket.readyState === 0 || socket.readyState === 1)) {
-      socket.close(1000, "panel hidden");
-    }
-    this.socket = undefined;
+    this.transport.close();
   }
 
   private subscribeInitialChannels(): void {
@@ -216,7 +174,7 @@ class FqgateMarketRealtimeConnection implements MarketRealtimeConnection {
   }
 
   private send(payload: unknown): void {
-    if (this.socket?.readyState === 1) this.socket.send(JSON.stringify(payload));
+    this.transport.send(payload);
   }
 
   private handleMessage(raw: unknown): void {
@@ -301,15 +259,6 @@ class FqgateMarketRealtimeConnection implements MarketRealtimeConnection {
     this.listener.onResyncRequired();
   }
 
-  private startHeartbeat(): void {
-    this.stopHeartbeat();
-    this.pingTimer = window.setInterval(() => this.send({ action: "ping" }), 20_000);
-  }
-
-  private stopHeartbeat(): void {
-    if (this.pingTimer !== undefined) window.clearInterval(this.pingTimer);
-    this.pingTimer = undefined;
-  }
 }
 
 function fallbackReasonFromHealth(
