@@ -1,4 +1,4 @@
-name: 准备 MCP Apps 发布
+name: 发布 MCP Apps
 
 on:
   workflow_dispatch:
@@ -22,11 +22,12 @@ on:
         required: true
         default: 0.1.0
         type: string
+  push:
+    tags:
+      - mcp-apps-release-*
 
 permissions:
-  actions: write
   contents: write
-  pull-requests: write
 
 concurrency:
   group: fqgate-mcp-apps-release
@@ -34,12 +35,12 @@ concurrency:
 
 jobs:
   prepare:
-    name: 构建、签名并生成发布 PR
-    if: github.ref == 'refs/heads/main'
+    name: 构建、签名并发布到主分支
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-24.04
     environment: mcp-apps-production
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: 检出主分支
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -57,8 +58,8 @@ jobs:
       - name: 计算 MCP Apps 新版本
         id: version
         env:
-          RELEASE_BUMP: ${{ inputs.bump }}
-          CUSTOM_VERSION: ${{ inputs.custom_version }}
+          RELEASE_BUMP: ${{ github.event_name == 'workflow_dispatch' && inputs.bump || 'patch' }}
+          CUSTOM_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.custom_version || '' }}
         run: |
           arguments=(--component mcp-apps --bump "$RELEASE_BUMP")
           if [ -n "$CUSTOM_VERSION" ]; then arguments+=(--custom-version "$CUSTOM_VERSION"); fi
@@ -66,10 +67,12 @@ jobs:
           test -n "$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: 更新 MCP Apps 版本
+        env:
+          MINIMUM_FQGATE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.minimum_fqgate_version || '0.1.0' }}
         run: >-
           node AI-plugins/ui-apps/scripts/prepare-mcp-apps-version.mjs
           --version "${{ steps.version.outputs.version }}"
-          --minimum-fqgate-version "${{ inputs.minimum_fqgate_version }}"
+          --minimum-fqgate-version "$MINIMUM_FQGATE_VERSION"
       - name: 运行无正式密钥测试
         run: npm --prefix AI-plugins/ui-apps run test:mcp-apps
       - name: 使用正式密钥生成签名版本
@@ -82,14 +85,10 @@ jobs:
           --release-root fqgate/mcp-apps
           --public-key-file fqgate/mcp-apps/mcp-apps-ed25519-public.pem
           --version "${{ steps.version.outputs.version }}"
-      - name: 创建发布分支和 PR
+      - name: 发布到主分支
         run: |
-          branch="release/mcp-apps-v${{ steps.version.outputs.version }}"
-          git switch -c "$branch"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add AI-plugins/ui-apps/mcp-apps/apps.json fqgate/mcp-apps
-          git commit -m "准备 MCP Apps ${{ steps.version.outputs.version }} 发布"
-          git push --set-upstream origin "$branch"
-          gh pr create --base main --head "$branch" --title "准备 MCP Apps ${{ steps.version.outputs.version }} 发布" --body "已经完成 UI 构建、Ed25519 正式签名和公钥验签。合并且主分支 CI 成功后，GitHub 稳定通道生效，并自动把同一提交同步到 Gitee。"
-          gh workflow run ci.yml --ref "$branch"
+          git commit -m "发布 MCP Apps ${{ steps.version.outputs.version }}"
+          git push origin HEAD:main
