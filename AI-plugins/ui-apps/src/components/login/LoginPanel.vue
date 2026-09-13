@@ -133,7 +133,7 @@ async function pollQrLogin(): Promise<void> {
       qrNoticeType.value = "warning";
       return;
     }
-    qrNotice.value = `暂时无法确认扫码状态，请刷新二维码。${errorMessage(error)}`;
+    qrNotice.value = errorMessage(error);
     qrNoticeType.value = "error";
   }
 }

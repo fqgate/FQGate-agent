@@ -116,7 +116,7 @@ try {
   if (qrBeginRequests !== 1) throw new Error(`页面未自动获取二维码：requestCount=${qrBeginRequests}`);
   await assertQrStageHeight(page);
   const settledCardHeight = await elementHeight(page, ".login-panel");
-  await page.getByText("暂时无法确认扫码状态，请刷新二维码。", { exact: false }).waitFor({ timeout: 3_000 });
+  await page.getByText("无法连接本机 FQGate", { exact: false }).waitFor({ timeout: 3_000 });
   if (await page.locator(".component-connection-mask").count()) {
     throw new Error("登录组件不应把请求失败显示成数据服务重连遮罩");
   }
