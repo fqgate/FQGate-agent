@@ -35,11 +35,13 @@ concurrency:
 
 jobs:
   prepare:
-    name: 构建、签名并发布到主分支
+    name: 全自动构建、签名并发布到主分支
     if: >-
       github.event_name == 'push' ||
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-24.04
+    # 该环境只用于隔离正式签名私钥，不配置 required reviewers。
+    # 正式发布标签或 workflow_dispatch 本身就是发布授权，避免流程停在 waiting。
     environment: mcp-apps-production
     steps:
       - name: 检出主分支
@@ -66,6 +68,17 @@ jobs:
           version="$(node scripts/release/resolve-release-version.mjs "${arguments[@]}")"
           test -n "$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: 校验正式发布标签
+        if: github.event_name == 'push'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          expected_tag="mcp-apps-release-${RELEASE_VERSION}"
+          if [ "$RELEASE_TAG" != "$expected_tag" ]; then
+            echo "::error::发布标签 $RELEASE_TAG 与计算出的 MCP Apps 版本 $RELEASE_VERSION 不一致，应为 $expected_tag"
+            exit 1
+          fi
       - name: 更新 MCP Apps 版本
         env:
           MINIMUM_FQGATE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.minimum_fqgate_version || '0.1.0' }}
@@ -92,3 +105,46 @@ jobs:
           git add AI-plugins/ui-apps/mcp-apps/apps.json fqgate/mcp-apps
           git commit -m "发布 MCP Apps ${{ steps.version.outputs.version }}"
           git push origin HEAD:main
+      - name: 验证 GitHub 稳定入口已更新
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          root="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/fqgate/mcp-apps"
+          stable_file="$RUNNER_TEMP/mcp-apps-stable.json"
+          manifest_file="$RUNNER_TEMP/mcp-apps-manifest.json"
+
+          for attempt in $(seq 1 12); do
+            cache_buster="${GITHUB_RUN_ID}-${attempt}"
+            if curl --fail --silent --show-error --location \
+              "${root}/stable.json?run=${cache_buster}" -o "$stable_file" \
+              && node - "$stable_file" "$RELEASE_VERSION" <<'NODE'
+          const fs = require("node:fs");
+          const [file, expected] = process.argv.slice(2);
+          const stable = JSON.parse(fs.readFileSync(file, "utf8"));
+          if (stable.bundleVersion !== expected || stable.manifest !== `releases/${expected}/manifest.json`) {
+            process.exit(1);
+          }
+          NODE
+            then
+              if curl --fail --silent --show-error --location \
+                "${root}/releases/${RELEASE_VERSION}/manifest.json?run=${cache_buster}" \
+                -o "$manifest_file" \
+                && node - "$manifest_file" "$RELEASE_VERSION" <<'NODE'
+          const fs = require("node:fs");
+          const [file, expected] = process.argv.slice(2);
+          const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+          if (manifest.bundleVersion !== expected || manifest.channel !== "stable") {
+            process.exit(1);
+          }
+          NODE
+              then
+                echo "GitHub 稳定入口已发布 MCP Apps ${RELEASE_VERSION}。"
+                exit 0
+              fi
+            fi
+            sleep 5
+          done
+
+          echo "::error::GitHub 稳定入口在等待后仍未指向 MCP Apps ${RELEASE_VERSION}"
+          exit 1
