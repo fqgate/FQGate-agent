@@ -148,3 +148,10 @@ jobs:
 
           echo "::error::GitHub 稳定入口在等待后仍未指向 MCP Apps ${RELEASE_VERSION}"
           exit 1
+
+  sync-gitee:
+    name: 同步 MCP Apps 到 Gitee
+    needs: prepare
+    if: needs.prepare.result == 'success'
+    uses: ./.github/workflows/sync-gitee.yml
+    secrets: inherit
