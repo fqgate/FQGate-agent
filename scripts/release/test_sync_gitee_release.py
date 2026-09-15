@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from sync_gitee_release import read_published_manifest, synchronize_release
+from sync_gitee_release import read_published_manifest, synchronize_release, synchronize_assets_release
 
 
 class FakeGiteeApi:
@@ -91,6 +91,16 @@ def create_fixture(root: Path, status="published"):
 
 
 class SyncGiteeReleaseTests(unittest.TestCase):
+    def test_fqgate_uses_independent_tag_and_repository(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "FQGate-1.0.0-windows-x64-UNSIGNED.exe"
+            path.write_bytes(b"verified-release")
+            api = FakeGiteeApi()
+            release = synchronize_assets_release(api, "qicuo/fqgate-releases", "fqgate-v1.0.0",
+                                                  "FQGate v1.0.0", "行情更新", [path], "a" * 40)
+            self.assertEqual(release["tag_name"], "fqgate-v1.0.0")
+            self.assertEqual(api.uploaded, [path.name])
+
     def test_rejects_unpublished_manifest(self):
         with tempfile.TemporaryDirectory() as directory:
             version, manifest_path, _, _ = create_fixture(Path(directory), status="unpublished")

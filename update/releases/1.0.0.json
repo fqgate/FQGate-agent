@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "component": "fqgate-agent",
+  "status": "published",
+  "version": "1.0.0",
+  "publishedAtUtc": "2026-09-15T00:34:21Z",
+  "releaseUrls": {
+    "github": "https://github.com/zhuyifang/tonghuasun-agent/releases/tag/v1.0.0",
+    "gitee": "https://gitee.com/qicuo/tonghuasun-agent/releases/tag/v1.0.0"
+  },
+  "releaseNotes": [
+    "Agent 插件升级到 1.0.0，与 FQGate 1.0.0 主程序配套使用。",
+    "主程序兼容性改为只检查最低版本，不再限制更高版本；请更新已安装的旧插件以采用新规则。",
+    "统一更新 Codex、Claude Code、WorkBuddy、ZCode、OpenClaw、DeepSeek Harness、豆包和千问安装包。",
+    "FQGate 1.0.0 专注行情，不再提供交易 API 和交易 MCP 工具；请以当前连接的实际工具列表为准。",
+    "MCP Apps 继续独立更新，无需因插件版本更新重复安装主程序。"
+  ],
+  "packages": [
+    {
+      "adapter": "claude-code",
+      "fileName": "fqgate-agent-claude-code-1.0.0.zip",
+      "size": 75333,
+      "sha256": "f3ff9e9ef6a51c7528bf880b0b97968cf086fd90cd74d01101cb459e8200e497"
+    },
+    {
+      "adapter": "codex",
+      "fileName": "fqgate-agent-codex-1.0.0.zip",
+      "size": 76107,
+      "sha256": "4402527a70299d3f45d8a4dda8e153ada100bbc0b8419f44f27a6c26cbe7abe6"
+    },
+    {
+      "adapter": "deepseek-harness",
+      "fileName": "fqgate-agent-deepseek-harness-1.0.0.tgz",
+      "size": 66003,
+      "sha256": "06ff059e35fba6a5455c0a9cbf13e0601fe44d94cd32d57dfe321c375caa7dd8"
+    },
+    {
+      "adapter": "doubao",
+      "fileName": "fqgate-agent-doubao-1.0.0.zip",
+      "size": 78862,
+      "sha256": "0fafc5b629c5b165da6537914fbe10f1a769ae4c34f5ac1fc853a4d95f993131"
+    },
+    {
+      "adapter": "openclaw",
+      "fileName": "fqgate-agent-openclaw-1.0.0.zip",
+      "size": 75220,
+      "sha256": "75d9a8827f8df6023bcf06129eb362a3a6578d6f8513e1885dc3b35f21eedbad"
+    },
+    {
+      "adapter": "qianwen",
+      "fileName": "fqgate-agent-qianwen-1.0.0.zip",
+      "size": 79886,
+      "sha256": "60a5c5bba03dc9e2079508a0c0c5a3b0d436da325906db52e4e1173f846029f9"
+    },
+    {
+      "adapter": "workbuddy",
+      "fileName": "fqgate-agent-workbuddy-1.0.0.zip",
+      "size": 76420,
+      "sha256": "10cad1cff6fb8258e1684d219e55beaa85e32c326799881df838675e36b98034"
+    },
+    {
+      "adapter": "zcode",
+      "fileName": "fqgate-agent-zcode-1.0.0.zip",
+      "size": 75368,
+      "sha256": "a09ac49fc1ea6e62ead214011a358eb12a6edbdb250e91cc2d23c6ba12f4fa85"
+    },
+    {
+      "adapter": "zcode-marketplace",
+      "fileName": "fqgate-agent-zcode-marketplace-1.0.0.zip",
+      "size": 96091,
+      "sha256": "ccf2e8de83e7042e7326ada2aa923a38d0c76345463c357dab071a94f0ac7ff5"
+    }
+  ]
+}

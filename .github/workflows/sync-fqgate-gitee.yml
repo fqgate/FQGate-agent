@@ -1,0 +1,58 @@
+name: 同步 FQGate 发行到 Gitee
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: GitHub 已公开的 FQGate 主程序版本
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fqgate-public-gitee-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    environment: gitee-production
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+      RELEASE_VERSION: ${{ inputs.version }}
+      GIT_TERMINAL_PROMPT: '0'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: 读取公开发行仓库并确认镜像可快进
+        shell: bash
+        run: |
+          [[ "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          test -n "$GITEE_TOKEN"
+          git clone https://github.com/zhuyifang/fqgate-releases.git fqgate-public
+          cd fqgate-public
+          git fetch --no-tags https://gitee.com/qicuo/fqgate-releases.git main:refs/remotes/gitee/main
+          git merge-base --is-ancestor refs/remotes/gitee/main HEAD
+          git rev-parse "refs/tags/fqgate-v$RELEASE_VERSION^{}"
+          echo "PUBLIC_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "RELEASE_COMMIT=$(git rev-parse refs/tags/fqgate-v$RELEASE_VERSION^{})" >> "$GITHUB_ENV"
+      - name: 配置临时 Gitee 认证并同步发行标签
+        shell: bash
+        run: |
+          askpass="$RUNNER_TEMP/gitee-askpass.sh"
+          printf '%s\n' '#!/usr/bin/env sh' 'case "$1" in' '*Username*) printf "%s\\n" qicuo ;;' '*Password*) printf "%s\\n" "$GITEE_TOKEN" ;;' 'esac' > "$askpass"
+          chmod 700 "$askpass"
+          echo "GIT_ASKPASS=$askpass" >> "$GITHUB_ENV"
+          GIT_ASKPASS="$askpass" git -C fqgate-public push https://gitee.com/qicuo/fqgate-releases.git "refs/tags/fqgate-v$RELEASE_VERSION:refs/tags/fqgate-v$RELEASE_VERSION"
+      - name: 校验并同步三个平台安装包
+        run: >-
+          python scripts/release/sync_fqgate_gitee.py
+          --version "$RELEASE_VERSION" --source fqgate-public
+          --artifacts fqgate-artifacts --target-commit "$RELEASE_COMMIT"
+      - name: 安装包齐全后同步说明与稳定清单
+        run: git -C fqgate-public push https://gitee.com/qicuo/fqgate-releases.git "$PUBLIC_COMMIT:refs/heads/main"

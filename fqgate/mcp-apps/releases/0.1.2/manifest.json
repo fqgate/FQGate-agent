@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "component": "fqgate-mcp-apps",
+  "channel": "stable",
   "bundleVersion": "0.1.2",
   "minimumFqgateVersion": "0.1.0",
   "apps": [
@@ -12,7 +13,9 @@
       "description": "登录同花顺行情账户。",
       "toolPaths": [
         "/v1/market/session/qr/begin"
-      ]
+      ],
+      "size": 683456,
+      "sha256": "17274a0d40e4b8e40656cd61b9ccf03903a4bfda643b52d44c48ca7d3bb946b2"
     },
     {
       "id": "candle",
@@ -22,7 +25,9 @@
       "description": "展示证券 K 线、均线、成交量及当前行情摘要。",
       "toolPaths": [
         "/v1/market/history/klines"
-      ]
+      ],
+      "size": 876689,
+      "sha256": "e6495cac559929dcff21f18494157ba8a974adf49df8ffb8dc9d51837a8b5282"
     },
     {
       "id": "information",
@@ -32,7 +37,9 @@
       "description": "展示指定证券的资讯列表、分类和阅读入口。",
       "toolPaths": [
         "/v1/market/information/news"
-      ]
+      ],
+      "size": 635079,
+      "sha256": "e31f3cccc14e8d8016f9467f167885f921844f1a2624318f118b3937f9998add"
     },
     {
       "id": "market-quotes",
@@ -42,7 +49,9 @@
       "description": "展示一组证券的实时行情与连接状态。",
       "toolPaths": [
         "/v1/market/realtime/cn"
-      ]
+      ],
+      "size": 684195,
+      "sha256": "984d6d52263ca93ff6caa1ab06d01b84239b5b597059618466bbff0670f42a98"
     },
     {
       "id": "order-flow",
@@ -52,7 +61,9 @@
       "description": "展示 Level-2 逐笔委托与撤单数据。",
       "toolPaths": [
         "/v1/market/level2/orders"
-      ]
+      ],
+      "size": 903575,
+      "sha256": "f12823f03018fe9871643ffa876ffc9c88c4fb623f78f849fda4c78b031e2c04"
     }
   ]
 }
