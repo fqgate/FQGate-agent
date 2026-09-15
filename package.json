@@ -25,6 +25,7 @@
   "type": "module",
   "scripts": {
     "build:mcp-apps": "npm --prefix AI-plugins/ui-apps run build:mcp-apps",
+    "build:website-demo": "npm --prefix AI-plugins/ui-apps run build:website",
     "dev:publish": "npm --prefix AI-plugins/ui-apps run dev:publish",
     "release:mcp-apps": "npm --prefix AI-plugins/ui-apps run release:mcp-apps --",
     "test": "node --test installer/tests/fqgate-config.test.mjs tests/plugin-integration.test.mjs tests/ai-tool-routing-evals.test.mjs scripts/release/versioning.test.mjs"

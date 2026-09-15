@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FQGate API 文档：同花顺行情、Level-2、资讯与证券数据接口。支持本机实时 OpenAPI 与内置文档自动切换。" />
+    <meta name="keywords" content="FQGate API,同花顺 API,MCP,Level-2,行情接口,A股数据接口" />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="FQGate API 文档｜同花顺行情与 Level-2 接口" />
+    <meta property="og:description" content="浏览 FQGate 的同花顺行情、Level-2、资讯和证券数据 API。" />
+    <meta property="og:url" content="https://zhuyifang.github.io/tonghuasun-agent/api/" />
+    <link rel="canonical" href="https://zhuyifang.github.io/tonghuasun-agent/api/" />
+    <link rel="icon" href="../assets/fqgate-app-icon.svg" type="image/svg+xml" />
+    <title>FQGate API 文档｜同花顺行情、Level-2 与资讯接口</title>
+    <link rel="stylesheet" href="./api.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference" defer></script>
+    <script src="./api.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "FQGate API 文档",
+        "description": "FQGate 同花顺行情、Level-2、资讯与证券数据 API 文档。",
+        "url": "https://zhuyifang.github.io/tonghuasun-agent/api/",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "FQGate",
+          "url": "https://zhuyifang.github.io/tonghuasun-agent/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <header class="api-header">
+      <div class="api-header-inner">
+        <a class="api-brand" href="../" aria-label="返回 FQGate 首页">
+          <img src="../assets/fqgate-app-icon.svg" alt="FQGate" />
+          <span>FQGate</span>
+        </a>
+        <div class="api-header-actions">
+          <span id="source-status" class="source-status">正在读取 API 文档…</span>
+          <a class="local-docs-link" href="http://127.0.0.1:17281/docs" target="_blank" rel="noreferrer">打开本机 /docs ↗</a>
+          <a class="back-link" href="../">返回首页</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="api-intro" aria-labelledby="api-title">
+        <div class="api-intro-inner">
+          <div>
+            <p class="api-kicker">FAST QUANT GATEWAY · OPENAPI</p>
+            <h1 id="api-title">FQGate API 文档</h1>
+            <p class="api-description">统一访问同花顺行情、Level-2、资讯和证券数据能力。页面优先读取正在运行的本机接口；未启动 FQGate 时自动使用内置 OpenAPI 文档。</p>
+          </div>
+          <div class="api-facts" aria-label="API 文档信息">
+            <div><span>接口版本</span><strong id="api-version">—</strong></div>
+            <div><span>接口数量</span><strong id="api-count">—</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="seo-summary" aria-label="API 能力摘要">
+        <div class="seo-summary-inner">
+          <div><span class="summary-dot"></span><strong>行情数据</strong><p>实时行情、K 线、分时、盘口、资讯和证券目录。</p></div>
+          <div><span class="summary-dot"></span><strong>Level-2</strong><p>逐笔成交、逐笔委托、撤单、十档盘口和买卖盘排名。</p></div>
+          <div><span class="summary-dot"></span><strong>选股与资讯</strong><p>条件选股、公告、研报和市场资讯。</p></div>
+        </div>
+      </section>
+
+      <section id="api-reference-shell" class="api-reference" aria-label="OpenAPI 接口参考">
+        <div id="api-loading" class="api-loading">正在加载接口定义…</div>
+        <div id="api-error" class="api-error" hidden>
+          <strong>接口文档暂时无法加载</strong>
+          <p>可以启动 FQGate 后刷新页面，或直接打开本机实时文档。</p>
+          <a href="http://127.0.0.1:17281/docs" target="_blank" rel="noreferrer">打开 http://127.0.0.1:17281/docs ↗</a>
+        </div>
+        <div id="scalar-app"></div>
+      </section>
+    </main>
+
+    <footer class="api-footer">
+      <span>FQGate · Fast Quant Gateway</span>
+      <span>API 定义以当前本机服务为准</span>
+    </footer>
+  </body>
+</html>

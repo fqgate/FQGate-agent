@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">FQGate 桌面图标</title>
+  <desc id="desc">红色圆角方形中的白色 FQGate 网关标志</desc>
+  <defs>
+    <linearGradient id="background" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF3B18"/>
+      <stop offset="0.48" stop-color="#F22618"/>
+      <stop offset="1" stop-color="#C70E18"/>
+    </linearGradient>
+  </defs>
+  <rect x="56" y="56" width="912" height="912" rx="218" fill="url(#background)"/>
+  <g transform="translate(92 91) scale(.82)" fill="#FFF9F7">
+    <path d="M166 248 450 96v196l-112 60v364c148-52 259-113 358-196-45 143-242 304-530 412V248Z"/>
+    <path d="M574 96 858 248v684L628 794V616c76-43 108-88 82-126-16-24-45-42-82-56v-82l-54-30V96Z"/>
+  </g>
+  <g transform="translate(92 91) scale(.82)" fill="#FFF9F7" stroke="#FFF9F7" stroke-width="13">
+    <path d="M402 462v128"/><rect x="384" y="500" width="36" height="55" rx="3" stroke="none"/>
+    <path d="M474 406v132"/><rect x="456" y="446" width="36" height="58" rx="3" stroke="none"/>
+    <path d="M546 350v134"/><rect x="528" y="390" width="36" height="60" rx="3" stroke="none"/>
+  </g>
+</svg>

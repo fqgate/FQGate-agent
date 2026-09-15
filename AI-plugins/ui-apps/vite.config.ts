@@ -6,6 +6,7 @@ import { ArcoResolver } from "unplugin-vue-components/resolvers";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  base: "./",
   plugins: [
     vue(),
     Components({

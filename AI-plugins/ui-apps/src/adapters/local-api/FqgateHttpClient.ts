@@ -6,6 +6,7 @@ import {
 import { getFqgateConnectionMonitor } from "./FqgateConnectionMonitor";
 
 const defaultFqgateFetch: typeof globalThis.fetch = (...args) => globalThis.fetch(...args);
+const DEFAULT_FQGATE_BASE_URL = "http://127.0.0.1:17281";
 
 export interface FqgateHttpClientOptions {
   baseUrl?: string;
@@ -160,8 +161,35 @@ function rawResponseError(payload: unknown, httpStatus: number): FqgateApiError 
 }
 
 export function resolveFqgateBaseUrl(): string {
-  const origin = globalThis.location?.origin;
-  return origin && /^https?:\/\//.test(origin) ? origin : "http://127.0.0.1:17281";
+  const configuredBaseUrl = readConfiguredFqgateBaseUrl();
+  if (configuredBaseUrl) return configuredBaseUrl;
+
+  // FQGate 的本机 API 端口固定，独立预览页不应把静态网站自身端口当成 API 地址。
+  return DEFAULT_FQGATE_BASE_URL;
+}
+
+function readConfiguredFqgateBaseUrl(): string | undefined {
+  const search = globalThis.location?.search;
+  if (!search) return undefined;
+
+  const value = new URLSearchParams(search).get("fqgate")?.trim();
+  return value ? normalizeFqgateBaseUrl(value) : undefined;
+}
+
+export function normalizeFqgateBaseUrl(value: string): string | undefined {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+    const isLoopback = hostname === "127.0.0.1"
+      || hostname === "localhost"
+      || hostname === "[::1]";
+    if (url.protocol !== "http:" || !isLoopback || url.username || url.password) {
+      return undefined;
+    }
+    return url.origin;
+  } catch {
+    return undefined;
+  }
 }
 
 export function toFqgateWebSocketUrl(baseUrl: string, path: string): string {
