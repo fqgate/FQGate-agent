@@ -123,10 +123,16 @@ def verify_asset(api, repository: str, release_id: int, remote: dict, local: Pat
 
 def synchronize_release(api, repository: str, manifest: dict, paths: list[Path], target_commit: str) -> dict:
     version = manifest["version"]
-    tag = f"v{version}"
+    return synchronize_assets_release(
+        api, repository, f"v{version}", f"同花顺免费开源 AI 插件 FQGate {version}",
+        release_body(manifest), paths, target_commit,
+    )
+
+
+def synchronize_assets_release(api, repository: str, tag: str, expected_name: str,
+                               expected_body: str, paths: list[Path], target_commit: str) -> dict:
+    """两类公开发行共用资产同步规则，不覆盖内容不同的已上传文件。"""
     release = find_release(api, repository, tag)
-    expected_name = f"同花顺免费开源 AI 插件 FQGate {version}"
-    expected_body = release_body(manifest)
     if not release:
         release = api.request(
             "POST",

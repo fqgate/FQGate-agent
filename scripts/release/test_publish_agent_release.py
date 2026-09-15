@@ -2,12 +2,29 @@ import hashlib
 import json
 import tempfile
 import unittest
+from unittest.mock import Mock
 from pathlib import Path
 
-from publish_agent_release import collect_artifacts, read_release_manifest
+from publish_agent_release import collect_artifacts, read_release_manifest, publish_release, stage_release
 
 
 class PublishAgentReleaseTests(unittest.TestCase):
+    def test_draft_update_preserves_release_tag(self):
+        api = Mock()
+        api.request.side_effect = [[], {"id": 1, "assets": [], "upload_url": "https://uploads.github.test"}, {}]
+        stage_release(api, "owner/repo", {"version": "1.0.0", "releaseNotes": ["更新"]}, [], "a" * 40)
+        self.assertEqual(api.request.call_args.args[2]["tag_name"], "v1.0.0")
+        self.assertEqual(api.request.call_args.args[2]["target_commitish"], "a" * 40)
+
+    def test_publish_preserves_release_tag(self):
+        api = Mock()
+        api.request.side_effect = [
+            [{"id": 1, "tag_name": "v1.0.0", "draft": True}],
+            {"tag_name": "v1.0.0", "draft": False, "published_at": "2026-09-15T00:00:00Z"},
+        ]
+        publish_release(api, "owner/repo", "1.0.0")
+        self.assertEqual(api.request.call_args.args[2]["tag_name"], "v1.0.0")
+
     def create_fixture(self, root: Path):
         version = "1.2.3"
         packages = []

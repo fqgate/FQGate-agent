@@ -170,7 +170,7 @@ def stage_release(api, repository: str, manifest: dict, paths: list[Path], targe
     return api.request(
         "PATCH",
         f"/repos/{repository}/releases/{release['id']}",
-        {"name": f"同花顺免费开源 AI 插件 FQGate {version}", "body": release_body(manifest), "draft": True},
+        {"tag_name": tag, "target_commitish": target_commit, "name": f"同花顺免费开源 AI 插件 FQGate {version}", "body": release_body(manifest), "draft": True},
     )
 
 
@@ -182,7 +182,7 @@ def publish_release(api, repository: str, version: str) -> dict:
         release = api.request(
             "PATCH",
             f"/repos/{repository}/releases/{release['id']}",
-            {"draft": False, "prerelease": False, "make_latest": "true"},
+            {"tag_name": f"v{version}", "draft": False, "prerelease": False, "make_latest": "true"},
         )
     if release.get("draft") or not release.get("published_at"):
         raise RuntimeError("Agent GitHub Release 没有成功公开")
