@@ -107,6 +107,9 @@ function requestLogout(): void {
   display: grid;
   gap: 16px;
   width: min(100%, 1440px);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 20px 24px 32px;
 }
@@ -114,6 +117,13 @@ function requestLogout(): void {
 .account-list {
   display: grid;
   gap: 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.account-list > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 640px) {

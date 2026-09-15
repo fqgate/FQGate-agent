@@ -6,6 +6,7 @@ import { FqgateApiError } from "@/adapters/local-api/FqgateHttpClient";
 import { tradingService } from "~/services";
 import type { OpenApiContract, TableResponse, TradingAccount } from "~/types";
 import RecordsTable from "./RecordsTable.vue";
+import { presetDateRange } from "./dateRanges";
 import type { DateRangeValue, RecordColumn, TradingRecord, UserFacingError } from "./types";
 
 const props = defineProps<{
@@ -19,8 +20,7 @@ const contract = ref<OpenApiContract | null>();
 const result = ref<TableResponse | null>(null);
 const loading = ref(false);
 const error = ref<UserFacingError | null>(null);
-const today = localDate();
-const dateRange = ref<DateRangeValue>({ startDate: today, endDate: today });
+const dateRange = ref<DateRangeValue>(presetDateRange("today"));
 let requestController: AbortController | undefined;
 
 const usesDates = computed(() => contract.value?.parameters.some(
@@ -106,11 +106,6 @@ function toUserError(reason: unknown, fallback: string): UserFacingError {
   return { message: reason instanceof Error && reason.message.trim() ? reason.message : fallback };
 }
 
-function localDate(): string {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60_000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-}
 </script>
 
 <template>

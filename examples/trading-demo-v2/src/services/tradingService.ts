@@ -1,4 +1,5 @@
 import {
+  FqgateApiError,
   FqgateHttpClient,
   toFqgateWebSocketUrl,
   type FqgateHttpClientOptions
@@ -35,6 +36,9 @@ export type MarketStreamOptions = Omit<
 >;
 
 const MARKET_STREAM_PATH = "/v1/market/stream";
+const SESSION_NOT_FOUND = "SESSION_NOT_FOUND";
+
+export type TradingSessionInvalidListener = (sessionId: string) => void;
 
 /**
  * 交易示例的本机服务入口。HTTP 与 WebSocket 都复用 ui-apps 的统一底层，
@@ -42,6 +46,7 @@ const MARKET_STREAM_PATH = "/v1/market/stream";
  */
 export class FqgateTradingService {
   private readonly client: FqgateHttpClient;
+  private readonly sessionInvalidListeners = new Set<TradingSessionInvalidListener>();
   private openApiRequest?: Promise<OpenApiDocument>;
 
   constructor(options: TradingServiceOptions = {}) {
@@ -98,9 +103,12 @@ export class FqgateTradingService {
 
   getAccounts(sessionId: string, signal?: AbortSignal): Promise<TradingAccountsResponse> {
     const query = new URLSearchParams({ sessionId });
-    return this.client.get<TradingAccountsResponse>(
-      `/v1/trading/accounts?${query.toString()}`,
-      signal
+    return this.observeSession(
+      sessionId,
+      this.client.get<TradingAccountsResponse>(
+        `/v1/trading/accounts?${query.toString()}`,
+        signal
+      )
     );
   }
 
@@ -108,9 +116,12 @@ export class FqgateTradingService {
     context: TradingAccountContext,
     signal?: AbortSignal
   ): Promise<AssetsResponse> {
-    return this.client.get<AssetsResponse>(
-      `/v1/trading/assets?${accountQuery(context).toString()}`,
-      signal
+    return this.observeSession(
+      context.sessionId,
+      this.client.get<AssetsResponse>(
+        `/v1/trading/assets?${accountQuery(context).toString()}`,
+        signal
+      )
     );
   }
 
@@ -118,9 +129,12 @@ export class FqgateTradingService {
     context: TradingAccountContext,
     signal?: AbortSignal
   ): Promise<PositionsResponse> {
-    return this.client.get<PositionsResponse>(
-      `/v1/trading/positions?${accountQuery(context).toString()}`,
-      signal
+    return this.observeSession(
+      context.sessionId,
+      this.client.get<PositionsResponse>(
+        `/v1/trading/positions?${accountQuery(context).toString()}`,
+        signal
+      )
     );
   }
 
@@ -136,7 +150,10 @@ export class FqgateTradingService {
       query.set("startDate", dates.startDate);
       query.set("endDate", dates.endDate);
     }
-    return this.client.get<TableResponse>(`${normalizedPath}?${query.toString()}`, signal);
+    return this.observeSession(
+      context.sessionId,
+      this.client.get<TableResponse>(`${normalizedPath}?${query.toString()}`, signal)
+    );
   }
 
   submit<T = unknown>(
@@ -145,13 +162,20 @@ export class FqgateTradingService {
     headers?: HeadersInit,
     signal?: AbortSignal
   ): Promise<T> {
-    return this.client.post<T>(
+    const sessionId = readSessionId(payload);
+    const request = this.client.post<T>(
       tradingApiPath(path),
       payload,
       signal,
       undefined,
       headers
     );
+    return sessionId ? this.observeSession(sessionId, request) : request;
+  }
+
+  onSessionInvalid(listener: TradingSessionInvalidListener): () => void {
+    this.sessionInvalidListeners.add(listener);
+    return () => this.sessionInvalidListeners.delete(listener);
   }
 
   async getOpenApiContract(
@@ -202,6 +226,21 @@ export class FqgateTradingService {
         });
     }
     return this.openApiRequest;
+  }
+
+  /**
+   * 会话失效属于整个交易工作台的状态变化，而不是某个表格自己的错误。
+   * 在服务出口统一广播，并携带请求所用的 sessionId，避免旧请求误退新登录。
+   */
+  private async observeSession<T>(sessionId: string, request: Promise<T>): Promise<T> {
+    try {
+      return await request;
+    } catch (error) {
+      if (error instanceof FqgateApiError && error.code === SESSION_NOT_FOUND) {
+        for (const listener of this.sessionInvalidListeners) listener(sessionId);
+      }
+      throw error;
+    }
   }
 }
 
@@ -264,6 +303,12 @@ function tradingApiPath(path: string): string {
     throw new Error("交易查询地址不正确，请刷新页面后重试。");
   }
   return normalized;
+}
+
+function readSessionId(payload: unknown): string {
+  if (!payload || typeof payload !== "object") return "";
+  const value = (payload as Record<string, unknown>).sessionId;
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function resolveSchema(

@@ -7,6 +7,7 @@ import { tradingService } from "~/services";
 import type { AssetsResponse, Position, PositionsResponse, TradingAccount } from "~/types";
 import AccountCard from "./AccountCard.vue";
 import AccountRecordsPanel from "./AccountRecordsPanel.vue";
+import CancelOrdersPanel from "./CancelOrdersPanel.vue";
 import OperationPanel from "./OperationPanel.vue";
 import RecordsTable from "./RecordsTable.vue";
 import type {
@@ -46,8 +47,7 @@ const recordRoutes: Partial<Record<AccountTabKey, { title: string; path: string 
 };
 const orderRoutes = {
   买入: "/v1/trading/accounts/{accountId}/orders",
-  卖出: "/v1/trading/accounts/{accountId}/orders",
-  撤单: "/v1/trading/orders/cancel"
+  卖出: "/v1/trading/accounts/{accountId}/orders"
 } as const;
 const extraRoutes: Record<AccountActionKey, {
   title: string;
@@ -254,8 +254,13 @@ function numberTone(value: unknown) {
     <template #panel>
       <a-tabs v-if="activeTab === 'trade'" v-model:active-key="tradeAction" size="small">
         <a-tab-pane v-for="name in ['买入', '卖出', '撤单']" :key="name" :title="name">
+          <CancelOrdersPanel
+            v-if="tradeAction === name && name === '撤单'"
+            :session-id="sessionId"
+            :account="account"
+          />
           <OperationPanel
-            v-if="tradeAction === name"
+            v-else-if="tradeAction === name"
             :key="name"
             :path="orderRoutes[name as keyof typeof orderRoutes]"
             :title="name"

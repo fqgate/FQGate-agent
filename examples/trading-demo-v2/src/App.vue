@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
+import { watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 import { useTradingSessionStore } from "~/stores";
 
+const route = useRoute();
+const router = useRouter();
 const sessionStore = useTradingSessionStore();
-const { initialized } = storeToRefs(sessionStore);
+const { initialized, isLoggedIn } = storeToRefs(sessionStore);
+
+watch([initialized, isLoggedIn, () => route.name], ([ready, loggedIn, routeName]) => {
+  if (ready && !loggedIn && routeName === "trading") {
+    void router.replace({ name: "login" });
+  }
+}, { immediate: true });
 </script>
 
 <template>

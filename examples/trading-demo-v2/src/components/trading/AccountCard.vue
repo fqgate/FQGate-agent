@@ -119,6 +119,18 @@ function selectTab(value: string | number) {
 <style scoped>
 .account-card {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.account-card :deep(.arco-card-body),
+.account-card :deep(.arco-tabs),
+.account-card :deep(.arco-tabs-content),
+.account-card :deep(.arco-tabs-content-list),
+.account-card :deep(.arco-tabs-pane) {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .account-title {

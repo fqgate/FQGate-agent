@@ -189,9 +189,24 @@ export const useTradingSessionStore = defineStore("trading-session", () => {
     removePersistedState();
   }
 
+  function expireSession(sessionId: string): void {
+    if (session.value?.sessionId !== sessionId) return;
+    ++requestSequence;
+    pendingRequest?.abort();
+    pendingRequest = undefined;
+    restorePromise = undefined;
+    clearSessionState();
+    initialized.value = true;
+    removePersistedState();
+    errorMessage.value = "当前登录已失效，请重新登录。";
+  }
+
   function clearError(): void {
     errorMessage.value = "";
   }
+
+  // 任意交易接口确认会话失效时，统一清理内存和本机状态。
+  tradingService.onSessionInvalid(expireSession);
 
   // Store 首次创建时自动校验本地会话，路由和组件只需观察 initialized/status。
   if (restoredState) void restoreSession();

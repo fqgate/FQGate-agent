@@ -7,6 +7,12 @@ import type {
   TradingRecord,
   UserFacingError,
 } from './types'
+import {
+  dateRangePresets,
+  presetDateRange,
+  selectedDateRangePreset,
+  type DateRangePreset,
+} from './dateRanges'
 
 const props = withDefaults(defineProps<{
   title: string
@@ -19,6 +25,10 @@ const props = withDefaults(defineProps<{
   dateRange?: DateRangeValue | null
   showDateFilter?: boolean
   tableHeight?: number
+  actionColumn?: {
+    title: string
+    width?: number
+  }
 }>(), {
   rowKey: 'id',
   loading: false,
@@ -36,20 +46,35 @@ const emit = defineEmits<{
   'row-click': [record: TradingRecord]
 }>()
 
-const tableColumns = computed(() => props.columns.map(column => ({
-  title: column.title,
-  dataIndex: column.key,
-  width: column.width ?? defaultColumnWidth(column.title),
-  align: column.align,
-  fixed: column.fixed,
-  ellipsis: true,
-  tooltip: true,
-  slotName: 'recordCell',
-})))
+const tableColumns = computed(() => [
+  ...props.columns.map(column => ({
+    title: column.title,
+    dataIndex: column.key,
+    width: column.width ?? defaultColumnWidth(column.title),
+    align: column.align,
+    fixed: column.fixed,
+    ellipsis: true,
+    tooltip: true,
+    slotName: 'recordCell',
+  })),
+  ...(props.actionColumn ? [{
+    title: props.actionColumn.title,
+    dataIndex: '__recordActions',
+    width: props.actionColumn.width ?? 88,
+    align: 'center' as const,
+    fixed: 'right' as const,
+    ellipsis: false,
+    tooltip: false,
+    slotName: 'recordActions',
+  }] : []),
+])
 
 const tableScroll = computed(() => ({
   x: tableColumns.value.reduce((width, column) => width + column.width, 0),
   y: props.tableHeight,
+}))
+const tableStyle = computed(() => ({
+  '--records-table-height': `${props.tableHeight}px`,
 }))
 
 const pickerValue = computed<[string, string] | undefined>(() => props.dateRange
@@ -61,6 +86,7 @@ const canQuery = computed(() => !props.showDateFilter || Boolean(
   && props.dateRange.endDate
   && props.dateRange.startDate <= props.dateRange.endDate,
 ))
+const activeDateRangePreset = computed(() => selectedDateRangePreset(props.dateRange))
 
 function updateDateRange(value?: Array<unknown>) {
   if (!value || value.length !== 2) {
@@ -71,6 +97,14 @@ function updateDateRange(value?: Array<unknown>) {
     startDate: String(value[0]),
     endDate: String(value[1]),
   })
+}
+
+function chooseDateRangePreset(value: string | number | boolean) {
+  const preset = String(value) as DateRangePreset
+  if (!dateRangePresets.some(item => item.key === preset)) return
+  const range = presetDateRange(preset)
+  emit('update:dateRange', range)
+  emit('query', range)
 }
 
 function rawValue(record: TradingRecord, key: string) {
@@ -120,6 +154,19 @@ function defaultColumnWidth(title: string): number {
         <span>共 {{ records.length }} 条</span>
       </div>
       <a-space size="small" wrap>
+        <a-radio-group
+          v-if="showDateFilter"
+          class="date-shortcuts"
+          type="button"
+          size="small"
+          :model-value="activeDateRangePreset"
+          :disabled="loading"
+          @change="chooseDateRangePreset"
+        >
+          <a-radio v-for="preset in dateRangePresets" :key="preset.key" :value="preset.key">
+            {{ preset.label }}
+          </a-radio>
+        </a-radio-group>
         <a-range-picker
           v-if="showDateFilter"
           :model-value="pickerValue"
@@ -148,6 +195,8 @@ function defaultColumnWidth(title: string): number {
     </a-alert>
 
     <a-table
+      class="records-table"
+      :style="tableStyle"
       :columns="tableColumns"
       :data="records"
       :row-key="rowKey"
@@ -163,6 +212,9 @@ function defaultColumnWidth(title: string): number {
           {{ displayCell(record, String(column.dataIndex)) }}
         </span>
       </template>
+      <template #recordActions="{ record }">
+        <slot name="actions" :record="record" />
+      </template>
       <template #empty>
         <a-empty :description="loading ? '正在查询' : error ? '暂未取得数据' : emptyText" />
       </template>
@@ -174,7 +226,29 @@ function defaultColumnWidth(title: string): number {
 .records-panel {
   display: grid;
   gap: 12px;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.records-panel :deep(.arco-table),
+.records-panel :deep(.arco-table-container) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.records-table :deep(.arco-table-body) {
+  height: var(--records-table-height);
+  min-height: var(--records-table-height);
+  max-height: var(--records-table-height) !important;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.records-table :deep(.arco-table-empty) {
+  height: 100%;
 }
 
 .records-toolbar {
@@ -199,6 +273,10 @@ function defaultColumnWidth(title: string): number {
 .records-toolbar span {
   color: var(--color-text-3);
   font-size: 12px;
+}
+
+.date-shortcuts {
+  flex-wrap: wrap;
 }
 
 .records-error {

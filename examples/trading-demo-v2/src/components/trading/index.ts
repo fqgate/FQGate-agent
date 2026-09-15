@@ -1,6 +1,7 @@
 export { default as AccountCard } from './AccountCard.vue'
 export { default as AccountRecordsPanel } from './AccountRecordsPanel.vue'
 export { default as AccountWorkspace } from './AccountWorkspace.vue'
+export { default as CancelOrdersPanel } from './CancelOrdersPanel.vue'
 export { default as OperationPanel } from './OperationPanel.vue'
 export { default as RecordsTable } from './RecordsTable.vue'
 export { default as TradingOperationForm } from './TradingOperationForm.vue'
