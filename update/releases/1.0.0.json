@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "component": "fqgate-agent",
-  "status": "unpublished",
+  "status": "published",
   "version": "1.0.0",
-  "publishedAtUtc": null,
+  "publishedAtUtc": "2026-09-15T00:34:21Z",
   "releaseUrls": {
     "github": "https://github.com/zhuyifang/tonghuasun-agent/releases/tag/v1.0.0",
     "gitee": "https://gitee.com/qicuo/tonghuasun-agent/releases/tag/v1.0.0"
