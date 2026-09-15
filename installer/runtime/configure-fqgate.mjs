@@ -70,7 +70,7 @@ async function main() {
     executableFound: Boolean(executablePath),
     fqgateVersion,
     fqgateCompatible,
-    supportedFqgateRange: `${compatibility.minimumVersion}..<${compatibility.maximumVersionExclusive}`,
+    supportedFqgateRange: `>=${compatibility.minimumVersion}`,
     mcpUrl,
     ...probe
   }, options.json);

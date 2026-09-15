@@ -1,6 +1,6 @@
 {
   "name": "fqgate-agent-workspace",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "同花顺免费开源AI插件FQGate（原 tonghuasun-agent），面向多种 AI 工具提供本机 A 股行情、K 线、Level-2、资讯、账户查询与可选交易能力。",
   "keywords": [
     "fqgate",

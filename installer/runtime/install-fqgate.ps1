@@ -31,17 +31,16 @@ function Get-CompatibilityFile {
     throw "安装包不完整：缺少 FQGate 兼容信息。"
 }
 
-function Assert-VersionInRange([string]$Version, [string]$Minimum, [string]$MaximumExclusive) {
+function Assert-MinimumFqgateVersion([string]$Version, [string]$Minimum) {
     try {
         $current = [Version]$Version
         $minimumVersion = [Version]$Minimum
-        $maximumVersion = [Version]$MaximumExclusive
     }
     catch {
         throw "FQGate 版本号格式不正确：$Version"
     }
-    if ($current -lt $minimumVersion -or $current -ge $maximumVersion) {
-        throw "FQGate $Version 不在当前插件支持的版本范围 $Minimum 到 $MaximumExclusive 之间。"
+    if ($current -lt $minimumVersion) {
+        throw "FQGate $Version 低于最低要求 $Minimum，请升级后重试。"
     }
 }
 
@@ -170,7 +169,7 @@ try {
     }
 
     $version = [string]$release.version
-    Assert-VersionInRange $version ([string]$compatibility.fqgate.minimumVersion) ([string]$compatibility.fqgate.maximumVersionExclusive)
+    Assert-MinimumFqgateVersion $version ([string]$compatibility.fqgate.minimumVersion)
     $fileName = [string]$package.fileName
     $tagName = "$tagPrefix$version"
     $downloadUrl = "$($releaseRepository.TrimEnd('/'))/releases/download/$tagName/$([Uri]::EscapeDataString($fileName))"
@@ -208,7 +207,7 @@ try {
     if ($LASTEXITCODE -ne 0 -or $versionOutput -notmatch "(?i)fqgate\s+(\d+\.\d+\.\d+)") {
         throw "FQGate 文件没有返回正确的版本号。"
     }
-    Assert-VersionInRange $Matches[1] ([string]$compatibility.fqgate.minimumVersion) ([string]$compatibility.fqgate.maximumVersionExclusive)
+    Assert-MinimumFqgateVersion $Matches[1] ([string]$compatibility.fqgate.minimumVersion)
 
     if ($needsReplace) {
         Stop-InstalledFqgate $executablePath

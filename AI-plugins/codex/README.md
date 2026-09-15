@@ -34,7 +34,7 @@ Windows 用户可以在仓库根目录运行 `powershell.exe -NoProfile -Executi
 ## 安装与配置
 
 1. 运行上面的自动安装命令；本机已有相同正式版本时会直接复用。
-2. 在仓库根目录运行 `Build-Distribution.ps1`，在 Codex 的 Plugins 页面安装生成的 `fqgate-agent-codex-0.3.0.zip`。
+2. 在仓库根目录运行 `Build-Distribution.ps1`，在 Codex 的 Plugins 页面安装生成的 `fqgate-agent-codex-1.0.0.zip`。
 3. 新建任务并发送“配置 FQGate”。自动发现失败时，只需提供 `fqgate.exe` 或 `FQGate.app/Contents/MacOS/fqgate` 的路径。
 4. 确认检查结果中的 `mcpReachable=true` 且 `toolCount` 大于零。
 

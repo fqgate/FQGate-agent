@@ -1,6 +1,6 @@
 {
   "name": "fqgate-agent",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "同花顺免费开源AI插件FQGate（原 tonghuasun-agent），为 Codex 提供本机 A 股行情、K 线、Level-2、资讯、账户查询和可选交易工具。",
   "author": {
     "name": "zhuyifang",
@@ -9,7 +9,19 @@
   "homepage": "https://github.com/zhuyifang/tonghuasun-agent",
   "repository": "https://github.com/zhuyifang/tonghuasun-agent",
   "license": "AGPL-3.0-only",
-  "keywords": ["FQGate", "tonghuasun-agent", "同花顺", "AI Agent", "MCP", "A股", "股票行情", "K线", "Level-2", "量化交易", "Codex"],
+  "keywords": [
+    "FQGate",
+    "tonghuasun-agent",
+    "同花顺",
+    "AI Agent",
+    "MCP",
+    "A股",
+    "股票行情",
+    "K线",
+    "Level-2",
+    "量化交易",
+    "Codex"
+  ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
@@ -18,7 +30,14 @@
     "longDescription": "通过当前电脑上运行的 FQGate，查询 A 股实时行情、K 线、Level-2、资讯、账户资产、持仓和交易记录；真实资金写工具默认隐藏。",
     "developerName": "zhuyifang",
     "category": "Finance",
-    "capabilities": ["Read", "Write", "Local MCP", "Market Data", "Account Data", "Trading"],
+    "capabilities": [
+      "Read",
+      "Write",
+      "Local MCP",
+      "Market Data",
+      "Account Data",
+      "Trading"
+    ],
     "websiteURL": "https://github.com/zhuyifang/tonghuasun-agent",
     "privacyPolicyURL": "https://github.com/zhuyifang/tonghuasun-agent/blob/main/docs/legal/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/zhuyifang/tonghuasun-agent/blob/main/docs/legal/TERMS.md",

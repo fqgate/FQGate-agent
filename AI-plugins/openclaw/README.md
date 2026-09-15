@@ -29,7 +29,7 @@ FQGate 主程序从 [FQGate 官方下载页](https://github.com/zhuyifang/fqgate
 
 Windows 用户可以在仓库根目录运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\installer\runtime\install-fqgate.ps1`；使用已经解压的插件安装包时，运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-fqgate.ps1`。命令会完成正式版下载、校验、固定目录安装、快捷方式创建、启动和连接检查。
 
-先按上面的正式路径下载、校验并启动兼容的 FQGate `0.1.x`，再解压 `fqgate-agent-openclaw-0.3.0.zip` 并执行：
+先按上面的正式路径下载、校验并启动 FQGate `0.1.0` 或更高版本，再解压 `fqgate-agent-openclaw-1.0.0.zip` 并执行：
 
 ```powershell
 openclaw plugins install .\fqgate-agent

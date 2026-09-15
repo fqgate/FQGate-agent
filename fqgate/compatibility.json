@@ -1,9 +1,8 @@
 {
   "schemaVersion": 1,
-  "agentVersion": "0.3.0",
+  "agentVersion": "1.0.0",
   "fqgate": {
-    "minimumVersion": "0.1.0",
-    "maximumVersionExclusive": "0.2.0"
+    "minimumVersion": "0.1.0"
   },
   "release": {
     "repositoryUrl": "https://github.com/zhuyifang/fqgate-releases",

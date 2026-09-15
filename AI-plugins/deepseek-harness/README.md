@@ -29,10 +29,10 @@ FQGate 主程序从 [FQGate 官方下载页](https://github.com/zhuyifang/fqgate
 
 Windows 用户可以在仓库根目录运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\installer\runtime\install-fqgate.ps1`；使用已经解压的插件安装包时，运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-fqgate.ps1`。命令会完成正式版下载、校验、固定目录安装、快捷方式创建、启动和连接检查。
 
-先按上面的正式路径下载、校验并启动兼容的 FQGate `0.1.x`。在仓库根目录运行 `Build-Distribution.ps1` 生成 npm 包，然后执行：
+先按上面的正式路径下载、校验并启动 FQGate `0.1.0` 或更高版本。在仓库根目录运行 `Build-Distribution.ps1` 生成 npm 包，然后执行：
 
 ```powershell
-dsh plugin --profile web add <fqgate-agent-deepseek-harness-0.3.0.tgz>
+dsh plugin --profile web add <fqgate-agent-deepseek-harness-1.0.0.tgz>
 dsh plugin --profile web exec fqgate-agent configure --fqgate-path "<FQGate 可执行文件>" --json
 dsh web
 ```

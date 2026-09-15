@@ -154,7 +154,7 @@ try {
         Write-Output "checksum_path=$checksumPath"
     }
     Write-Output "agent_version=$agentVersion"
-    Write-Output "fqgate_range=$($compatibility.fqgate.minimumVersion)..<$($compatibility.fqgate.maximumVersionExclusive)"
+    Write-Output "fqgate_range=>=$($compatibility.fqgate.minimumVersion)"
     Write-Output "build_mode=$(if ($Release) { 'release' } else { 'development' })"
     Write-Output "build_complete=true"
 }

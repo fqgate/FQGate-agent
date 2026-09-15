@@ -43,7 +43,7 @@ class Client:
             if encoded:
                 url += "?" + encoded
         body = None if payload is None else json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        headers = {"Accept": "application/json", "User-Agent": "fqgate-client-python/0.3.0"}
+        headers = {"Accept": "application/json", "User-Agent": "fqgate-client-python/1.0.0"}
         if body is not None:
             headers["Content-Type"] = "application/json"
         request = Request(url, data=body, method=method.upper(), headers=headers)
