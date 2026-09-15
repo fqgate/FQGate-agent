@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "fqgate-agent",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "同花顺免费开源AI插件FQGate（原 tonghuasun-agent），为 OpenClaw 提供本机 A 股行情、K 线、Level-2、资讯、账户查询和可选交易工具。",
   "author": {
     "name": "zhuyifang",
@@ -10,7 +10,19 @@
   "homepage": "https://github.com/zhuyifang/tonghuasun-agent/tree/main/AI-plugins/openclaw",
   "repository": "https://github.com/zhuyifang/tonghuasun-agent",
   "license": "AGPL-3.0-only",
-  "keywords": ["FQGate", "tonghuasun-agent", "同花顺", "AI Agent", "MCP", "A股", "股票行情", "K线", "Level-2", "量化交易", "OpenClaw"],
+  "keywords": [
+    "FQGate",
+    "tonghuasun-agent",
+    "同花顺",
+    "AI Agent",
+    "MCP",
+    "A股",
+    "股票行情",
+    "K线",
+    "Level-2",
+    "量化交易",
+    "OpenClaw"
+  ],
   "extensions": {
     "io.github.zhuyifang.fqgate": {
       "displayName": "同花顺免费开源AI插件FQGate",

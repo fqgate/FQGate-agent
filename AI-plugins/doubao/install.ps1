@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$pluginVersion = "0.3.0"
+$pluginVersion = "1.0.0"
 $skillNames = @("fqgate-realtime-stock-analyzer", "trade-execution")
 $retiredSkillNames = @("market-data", "configure-fqgate", "account-query")
 

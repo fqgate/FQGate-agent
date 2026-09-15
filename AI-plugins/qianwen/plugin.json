@@ -2,7 +2,7 @@
   "apiVersion": "qwen-agent/plugin/v1",
   "id": "fqgate-agent",
   "name": "同花顺免费开源AI插件FQGate",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "同花顺免费开源AI插件FQGate（原 tonghuasun-agent），在千问中查询本机 A 股行情、K 线、Level-2、资讯、账户和交易数据。",
   "author": "zhuyifang",
   "homepage": "https://github.com/zhuyifang/tonghuasun-agent",
@@ -11,14 +11,22 @@
   "mcpServers": {
     "fqgate": {
       "command": "node",
-      "args": ["${QWEN_PLUGIN_ROOT}/scripts/launch-fqgate-mcp.mjs"],
+      "args": [
+        "${QWEN_PLUGIN_ROOT}/scripts/launch-fqgate-mcp.mjs"
+      ],
       "env": {
         "FQGATE_MCP_TEXT_COMPATIBILITY": "true"
       }
     }
   },
   "skills": [
-    { "name": "fqgate-realtime-stock-analyzer", "path": "./skills/fqgate-realtime-stock-analyzer" },
-    { "name": "trade-execution", "path": "./skills/trade-execution" }
+    {
+      "name": "fqgate-realtime-stock-analyzer",
+      "path": "./skills/fqgate-realtime-stock-analyzer"
+    },
+    {
+      "name": "trade-execution",
+      "path": "./skills/trade-execution"
+    }
   ]
 }

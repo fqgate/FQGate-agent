@@ -190,19 +190,16 @@ export function readCompatibilityManifest(scriptUrl = import.meta.url) {
     throw new Error(`无法读取 FQGate 兼容清单：${compatibilityPath}：${formatError(error)}`);
   }
   const minimumVersion = manifest?.fqgate?.minimumVersion;
-  const maximumVersionExclusive = manifest?.fqgate?.maximumVersionExclusive;
   parseVersionCore(minimumVersion);
-  parseVersionCore(maximumVersionExclusive);
-  return { compatibilityPath, minimumVersion, maximumVersionExclusive };
+  return { compatibilityPath, minimumVersion };
 }
 
 export function assertFqgateVersionCompatible(version, range = readCompatibilityManifest()) {
   const current = parseVersionCore(version);
   const minimum = parseVersionCore(range.minimumVersion);
-  const maximum = parseVersionCore(range.maximumVersionExclusive);
-  if (compareVersionCore(current, minimum) < 0 || compareVersionCore(current, maximum) >= 0) {
+  if (compareVersionCore(current, minimum) < 0) {
     throw new Error(
-      `FQGate ${version} 不在支持范围 ${range.minimumVersion}..<${range.maximumVersionExclusive} 内。`
+      `FQGate ${version} 低于最低要求 ${range.minimumVersion}，请升级后重试。`
     );
   }
   return true;
@@ -238,7 +235,7 @@ export async function probeFqgate(mcpUrl, { timeoutMs = 3_000, fetchImpl = globa
       params: {
         protocolVersion: "2025-06-18",
         capabilities: {},
-        clientInfo: { name: "fqgate-agent-configure", version: "0.3.0" }
+        clientInfo: { name: "fqgate-agent-configure", version: "1.0.0" }
       }
     }, timeoutMs);
     result.mcpReachable = initialize?.result?.serverInfo?.name === "fqgate";

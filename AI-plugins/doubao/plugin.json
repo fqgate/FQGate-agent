@@ -2,7 +2,7 @@
   "apiVersion": "fqgate-agent/doubao/v1",
   "id": "fqgate-agent",
   "name": "同花顺免费开源AI插件FQGate",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "同花顺免费开源AI插件FQGate（原 tonghuasun-agent），在豆包中查询本机 A 股行情、K 线、Level-2、资讯、账户和交易数据。",
   "author": "zhuyifang",
   "homepage": "https://github.com/zhuyifang/tonghuasun-agent",

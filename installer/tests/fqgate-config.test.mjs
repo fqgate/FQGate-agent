@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   assertFqgateVersionCompatible,
   configPathFor,
@@ -72,14 +74,59 @@ test("共享配置可以原子写入并重新读取", () => {
   }
 });
 
-test("运行时从公共清单执行 FQGate 版本边界", () => {
+test("运行时只检查 FQGate 最低版本，允许更高的主版本", () => {
   const compatibility = readCompatibilityManifest();
   assert.equal(compatibility.minimumVersion, "0.1.0");
-  assert.equal(compatibility.maximumVersionExclusive, "0.2.0");
-  assert.equal(assertFqgateVersionCompatible("0.1.0", compatibility), true);
-  assert.equal(assertFqgateVersionCompatible("0.1.99-dev.1", compatibility), true);
-  assert.throws(() => assertFqgateVersionCompatible("0.0.99", compatibility), /不在支持范围/);
-  assert.throws(() => assertFqgateVersionCompatible("0.2.0", compatibility), /不在支持范围/);
+  assert.equal(Object.hasOwn(compatibility, "maximumVersionExclusive"), false);
+  for (const version of ["0.1.0", "0.1.99-dev.1", "0.2.0", "1.0.0", "2.0.0", "10.0.0"]) {
+    assert.equal(assertFqgateVersionCompatible(version, compatibility), true);
+  }
+  assert.throws(() => assertFqgateVersionCompatible("0.0.99", compatibility), /低于最低要求/);
+  assert.throws(() => assertFqgateVersionCompatible("invalid", compatibility), /版本格式无效/);
+  assert.throws(() => assertFqgateVersionCompatible("1.0.0", {}), /版本格式无效/);
+  assert.throws(() => assertFqgateVersionCompatible("1.4.0", { minimumVersion: "1.5.0" }), /低于最低要求/);
+  assert.equal(assertFqgateVersionCompatible("1.10.0", { minimumVersion: "1.5.0" }), true);
+  assert.equal(assertFqgateVersionCompatible("1.0.0", {
+    ...compatibility,
+    maximumVersionExclusive: "0.2.0"
+  }), true);
+});
+
+test("Windows 安装器的最低版本检查与启动器一致", { skip: process.platform !== "win32" }, () => {
+  // 仅载入安装脚本中的纯版本检查函数，避免测试触发下载、安装或进程操作。
+  const script = String.raw`
+    $ErrorActionPreference = 'Stop'
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+      (Join-Path $env:FQGATE_VERSION_TEST_ROOT 'runtime/install-fqgate.ps1'),
+      [ref]$tokens, [ref]$parseErrors)
+    if ($parseErrors.Count) { throw '安装脚本语法错误' }
+    $function = $ast.Find({ param($node)
+      $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+      $node.Name -eq 'Assert-MinimumFqgateVersion'
+    }, $true)
+    if ($null -eq $function) { throw '未找到最低版本检查函数' }
+    . ([scriptblock]::Create($function.Extent.Text))
+    foreach ($version in @('0.1.0', '0.2.0', '1.0.0', '2.0.0', '10.0.0')) {
+      Assert-MinimumFqgateVersion $version '0.1.0'
+    }
+    Assert-MinimumFqgateVersion '1.10.0' '1.5.0'
+    foreach ($case in @(@('0.0.99', '0.1.0'), @('1.4.0', '1.5.0'), @('invalid', '0.1.0'), @('1.0.0', ''))) {
+      $rejected = $false
+      try { Assert-MinimumFqgateVersion $case[0] $case[1] } catch { $rejected = $true }
+      if (-not $rejected) { throw '未拒绝低于最低要求或无效的版本' }
+    }
+    Write-Output 'minimum-version-ok'
+  `;
+  const result = spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
+    encoding: "utf8",
+    windowsHide: true,
+    timeout: 10_000,
+    env: { ...process.env, FQGATE_VERSION_TEST_ROOT: fileURLToPath(new URL("..", import.meta.url)) }
+  });
+  assert.equal(result.status, 0, result.error?.message || result.stderr);
+  assert.match(result.stdout, /minimum-version-ok/);
 });
 
 test("状态探针统计全部 MCP 工具分页", async () => {

@@ -31,7 +31,7 @@ Windows 用户可以在仓库根目录运行 `powershell.exe -NoProfile -Executi
 
 ## 安装
 
-先按上面的正式路径安装并启动兼容的 FQGate `0.1.x`，然后在 Claude Code 中依次执行：
+先按上面的正式路径安装并启动 FQGate `0.1.0` 或更高版本，然后在 Claude Code 中依次执行：
 
 ```text
 /plugin marketplace add zhuyifang/tonghuasun-agent
@@ -39,7 +39,7 @@ Windows 用户可以在仓库根目录运行 `powershell.exe -NoProfile -Executi
 /reload-plugins
 ```
 
-重新加载后，新建任务并确认名为 `fqgate` 的 MCP 已连接。需要离线安装时，从 [0.3.0 发行页](https://github.com/zhuyifang/tonghuasun-agent/releases/tag/v0.3.0)下载 `fqgate-agent-claude-code-0.3.0.zip`，核对发行清单中的 SHA-256 后再导入。
+重新加载后，新建任务并确认名为 `fqgate` 的 MCP 已连接。需要离线安装时，从 [1.0.0 发行页](https://github.com/zhuyifang/tonghuasun-agent/releases/tag/v1.0.0)下载 `fqgate-agent-claude-code-1.0.0.zip`，核对发行清单中的 SHA-256 后再导入。
 
 ## 使用边界
 

@@ -44,7 +44,7 @@ function compareVersions(left, right) {
 test("八个适配器与兼容清单使用同一 Agent 版本", () => {
   assert.match(agentVersion, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
   assert.equal(compatibility.fqgate.minimumVersion, "0.1.0");
-  assert.equal(compatibility.fqgate.maximumVersionExclusive, "0.2.0");
+  assert.deepEqual(Object.keys(compatibility.fqgate), ["minimumVersion"]);
 
   for (const [adapter, ...manifestPath] of manifests) {
     const manifest = readJson("AI-plugins", adapter, ...manifestPath);

@@ -1,9 +1,21 @@
 {
   "name": "fqgate-agent-deepseek-harness",
   "displayName": "同花顺免费开源AI插件FQGate",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "同花顺免费开源AI插件FQGate（原 tonghuasun-agent）的 DeepSeek Harness 入口，提供本机 A 股行情、K 线、Level-2、资讯、账户查询和可选交易工具。",
-  "keywords": ["FQGate", "tonghuasun-agent", "同花顺", "AI Agent", "MCP", "A股", "股票行情", "K线", "Level-2", "量化交易", "DeepSeek Harness"],
+  "keywords": [
+    "FQGate",
+    "tonghuasun-agent",
+    "同花顺",
+    "AI Agent",
+    "MCP",
+    "A股",
+    "股票行情",
+    "K线",
+    "Level-2",
+    "量化交易",
+    "DeepSeek Harness"
+  ],
   "license": "AGPL-3.0-only",
   "type": "module",
   "main": "./index.mjs",
@@ -11,7 +23,15 @@
   "bin": {
     "fqgate-agent": "./scripts/configure-fqgate.mjs"
   },
-  "files": ["cordis.patch.yml", "index.mjs", "scripts/", "skills/", "docs/", "assets/", "*.md"],
+  "files": [
+    "cordis.patch.yml",
+    "index.mjs",
+    "scripts/",
+    "skills/",
+    "docs/",
+    "assets/",
+    "*.md"
+  ],
   "peerDependencies": {
     "@deepseek-ai/dsh-mcp-client": "^0.1.0-rc.7"
   },
