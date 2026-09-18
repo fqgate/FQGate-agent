@@ -109,10 +109,10 @@ AI 助手会根据你使用的工具选择对应的正式安装包并完成配�
 
 - 本机接口文档：[127.0.0.1:17281/docs](http://127.0.0.1:17281/docs)
 - QQ 群：[免费AI量化数据](https://qm.qq.com/q/ZQSuiYQZ4Q)，群号：`14546787`
-- 微信群：同花顺 AI Agent 插件交流（当前二维码有效期至 2026 年 9 月 17 日；失效后请提交 Issue 提醒更新）
+- 微信群：同花顺 AI Agent 插件交流（当前二维码有效期至 2026 年 9 月 25 日；失效后请提交 Issue 提醒更新）
 
 <p align="center">
-  <img src="./assets/community/wechat-agent-group-qr.jpg" alt="同花顺 AI Agent 插件交流群二维码，有效期至 2026 年 9 月 17 日" width="280">
+  <img src="./assets/community/wechat-agent-group-qr.png" alt="同花顺 AI Agent 插件交流群二维码，有效期至 2026 年 9 月 25 日" width="280">
 </p>
 
 ## 关于交易功能
