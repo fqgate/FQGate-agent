@@ -103,7 +103,7 @@ function Assert-Package(
     }
 
     $forbiddenText = @(
-        "X-Tonghuasun-Codex-Token",
+        "X-Tonghuasun-Dll-Token",
         "127.0.0.1:17180",
         "ThsPlugin.",
         "\fqgate\src\",
