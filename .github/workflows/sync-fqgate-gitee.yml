@@ -1,11 +1,14 @@
 name: 同步 FQGate 发行到 Gitee
 
 on:
+  schedule:
+    # FQGate 发行仓库完成稳定清单切换后，最多等待一个调度周期自动镜像。
+    - cron: '*/15 * * * *'
   workflow_dispatch:
     inputs:
       version:
         description: GitHub 已公开的 FQGate 主程序版本
-        required: true
+        required: false
         type: string
 
 permissions:
@@ -29,7 +32,108 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
+      - name: 确定稳定版本并检查镜像状态
+        id: release-check
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${RELEASE_VERSION:-}" ]]; then
+            RELEASE_VERSION="$(python3 - <<'PY'
+          import json
+          from urllib.request import Request, urlopen
+
+          request = Request(
+              "https://raw.githubusercontent.com/zhuyifang/fqgate-releases/main/releases/stable.json",
+              headers={"User-Agent": "fqgate-gitee-sync"},
+          )
+          with urlopen(request, timeout=30) as response:
+              print(json.load(response)["version"])
+          PY
+          )"
+          fi
+          [[ "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+          import urllib.error
+          import urllib.request
+          version = os.environ["RELEASE_VERSION"]
+          github_headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+              "User-Agent": "fqgate-gitee-sync",
+              "X-GitHub-Api-Version": "2022-11-28",
+          }
+          gitee_headers = {
+              "Accept": "application/json",
+              "Authorization": f"Bearer {os.environ['GITEE_TOKEN']}",
+              "User-Agent": "fqgate-gitee-sync",
+          }
+
+          def get_json(url, headers):
+              request = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  return json.load(response)
+
+          def git_ref(url, ref):
+              result = subprocess.check_output(
+                  ["git", "ls-remote", url, ref], text=True, timeout=60
+              )
+              return result.split()[0] if result.split() else ""
+
+          github_release = get_json(
+              f"https://api.github.com/repos/zhuyifang/fqgate-releases/releases/tags/fqgate-v{version}",
+              github_headers,
+          )
+          expected = {
+              asset["name"]: asset.get("size")
+              for asset in github_release.get("assets", [])
+          }
+          synced = False
+          try:
+              gitee_release = get_json(
+                  f"https://gitee.com/api/v5/repos/qicuo/fqgate-releases/releases/tags/fqgate-v{version}",
+                  gitee_headers,
+              )
+              actual_assets = get_json(
+                  f"https://gitee.com/api/v5/repos/qicuo/fqgate-releases/releases/{gitee_release['id']}/attach_files?per_page=100",
+                  gitee_headers,
+              )
+              actual = {asset["name"]: asset.get("size") for asset in actual_assets}
+              public_commit = git_ref(
+                  "https://github.com/zhuyifang/fqgate-releases.git", "refs/heads/main"
+              )
+              remote_main = git_ref(
+                  "https://gitee.com/qicuo/fqgate-releases.git", "refs/heads/main"
+              )
+              remote_tag = git_ref(
+                  "https://gitee.com/qicuo/fqgate-releases.git", f"refs/tags/fqgate-v{version}"
+              )
+              synced = (
+                  bool(expected)
+                  and not gitee_release.get("prerelease")
+                  and actual == expected
+                  and remote_main == public_commit
+                  and bool(remote_tag)
+              )
+          except (
+              urllib.error.HTTPError,
+              urllib.error.URLError,
+              subprocess.SubprocessError,
+              KeyError,
+              IndexError,
+              json.JSONDecodeError,
+          ):
+              synced = False
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"sync_needed={'false' if synced else 'true'}\n")
+          print("Gitee 已同步，跳过重复上传" if synced else "Gitee 尚未同步，开始完整校验和上传")
+          PY
       - name: 读取公开发行仓库并确认镜像可快进
+        if: steps.release-check.outputs.sync_needed == 'true'
         shell: bash
         run: |
           [[ "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
@@ -42,6 +146,7 @@ jobs:
           echo "PUBLIC_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "RELEASE_COMMIT=$(git rev-parse refs/tags/fqgate-v$RELEASE_VERSION^{})" >> "$GITHUB_ENV"
       - name: 配置临时 Gitee 认证并同步发行标签
+        if: steps.release-check.outputs.sync_needed == 'true'
         shell: bash
         run: |
           askpass="$RUNNER_TEMP/gitee-askpass.sh"
@@ -50,9 +155,11 @@ jobs:
           echo "GIT_ASKPASS=$askpass" >> "$GITHUB_ENV"
           GIT_ASKPASS="$askpass" git -C fqgate-public push https://gitee.com/qicuo/fqgate-releases.git "refs/tags/fqgate-v$RELEASE_VERSION:refs/tags/fqgate-v$RELEASE_VERSION"
       - name: 校验并同步三个平台安装包
+        if: steps.release-check.outputs.sync_needed == 'true'
         run: >-
           python scripts/release/sync_fqgate_gitee.py
           --version "$RELEASE_VERSION" --source fqgate-public
           --artifacts fqgate-artifacts --target-commit "$RELEASE_COMMIT"
       - name: 安装包齐全后同步说明与稳定清单
+        if: steps.release-check.outputs.sync_needed == 'true'
         run: git -C fqgate-public push https://gitee.com/qicuo/fqgate-releases.git "$PUBLIC_COMMIT:refs/heads/main"
