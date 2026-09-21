@@ -20,4 +20,4 @@
 - 第三方组件及其许可证文本；
 - 赞助者头像、收款码和交流群二维码等个人图片。
 
-FQGate 编译包适用其随包许可，版本、下载地址和校验值由 [FQGate 官方发行仓库](https://github.com/zhuyifang/fqgate-releases)提供；本仓库只记录兼容关系。
+FQGate 编译包适用其随包许可，版本、下载地址和校验值由 [FQGate 官方发行仓库](https://github.com/fqgate/FQGate-releases)提供；本仓库只记录兼容关系。

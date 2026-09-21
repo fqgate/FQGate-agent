@@ -43,7 +43,7 @@ jobs:
           from urllib.request import Request, urlopen
 
           request = Request(
-              "https://raw.githubusercontent.com/zhuyifang/fqgate-releases/main/releases/stable.json",
+              "https://raw.githubusercontent.com/fqgate/FQGate-releases/main/releases/stable.json",
               headers={"User-Agent": "fqgate-gitee-sync"},
           )
           with urlopen(request, timeout=30) as response:
@@ -84,7 +84,7 @@ jobs:
               return result.split()[0] if result.split() else ""
 
           github_release = get_json(
-              f"https://api.github.com/repos/zhuyifang/fqgate-releases/releases/tags/fqgate-v{version}",
+              f"https://api.github.com/repos/fqgate/FQGate-releases/releases/tags/fqgate-v{version}",
               github_headers,
           )
           expected = {
@@ -103,7 +103,7 @@ jobs:
               )
               actual = {asset["name"]: asset.get("size") for asset in actual_assets}
               public_commit = git_ref(
-                  "https://github.com/zhuyifang/fqgate-releases.git", "refs/heads/main"
+                  "https://github.com/fqgate/FQGate-releases.git", "refs/heads/main"
               )
               remote_main = git_ref(
                   "https://gitee.com/qicuo/fqgate-releases.git", "refs/heads/main"
@@ -138,7 +138,7 @@ jobs:
         run: |
           [[ "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
           test -n "$GITEE_TOKEN"
-          git clone https://github.com/zhuyifang/fqgate-releases.git fqgate-public
+          git clone https://github.com/fqgate/FQGate-releases.git fqgate-public
           cd fqgate-public
           git fetch --no-tags https://gitee.com/qicuo/fqgate-releases.git main:refs/remotes/gitee/main
           git merge-base --is-ancestor refs/remotes/gitee/main HEAD

@@ -5,7 +5,7 @@
 分发、公开部署或提供本项目修改版本时，必须保留下列署名：
 
 > 基于 tonghuasun-agent 开发
-> 原始来源：https://github.com/zhuyifang/tonghuasun-agent
+> 原始来源：https://github.com/fqgate/FQGate-agent
 
 有“关于”“帮助”“致谢”或法律声明界面的软件，应在其中展示；没有此类界面的，
 应在 README、NOTICE 和发行说明之一的显著位置保留。

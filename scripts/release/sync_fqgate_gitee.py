@@ -38,7 +38,7 @@ def main():
 
     # 复用官方的三平台、构建编号、SHA-256 和资产集合校验；下载只做一次。
     github = CachedGitHubApi(os.environ["GITHUB_TOKEN"])
-    candidate = build_candidate(github, "zhuyifang/fqgate-releases", args.version)
+    candidate = build_candidate(github, "fqgate/FQGate-releases", args.version)
     manifest = candidate["manifest"]
     committed = json.loads((args.source / "releases" / f"{args.version}.json").read_text(encoding="utf-8"))
     if manifest["status"] != "published" or not manifest["publishedAt"] or manifest != committed:

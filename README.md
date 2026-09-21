@@ -28,7 +28,7 @@
 
 通过本插件，你可以在常用 AI 助手中直接查询 A 股实时行情、分时、K 线、Level-2 逐笔数据、资讯公告、证券资料、账户资产、持仓、委托和成交数据，为您的股票交易提供决策依据。
 
-> **更名说明：** 本项目原插件名为 `tonghuasun-agent`，现已更名为 `fqgate-agent`。GitHub 和 Gitee 仓库地址继续沿用原名称，方便旧用户、已有收藏和外部链接继续访问。
+> **更名说明：** 本项目原插件名为 `tonghuasun-agent`，现已更名为 `fqgate-agent`。GitHub 的规范地址已迁移为 `fqgate/FQGate-agent`，原 GitHub 地址继续重定向；Gitee 镜像仍沿用原仓库名，兼容旧用户、已有收藏和外部链接。
 
 所有 AI 插件入口、安装适配、技能和界面组件均免费开源，不设订阅、会员、套餐、试用额度或付费解锁。FQGate 作为本机量化网关单独提供编译包，并适用其随包许可。
 
@@ -39,7 +39,7 @@
 ## 项目地址
 
 - 国内仓库：[Gitee](https://gitee.com/qicuo/tonghuasun-agent)
-- GitHub 仓库：[GitHub](https://github.com/zhuyifang/tonghuasun-agent)
+- GitHub 仓库：[GitHub](https://github.com/fqgate/FQGate-agent)
 
 ## 安装说明
 
@@ -59,7 +59,9 @@
 ### FQGate 主程序下载
 
 - 国内下载：[Gitee FQGate 正式发行页](https://gitee.com/qicuo/fqgate-releases/releases)
-- 国外下载：[GitHub FQGate 正式发行页](https://github.com/zhuyifang/fqgate-releases/releases)
+- 国外下载：[GitHub FQGate 正式发行页](https://github.com/fqgate/FQGate-releases/releases)
+
+AI 安装时应先读取 [FQGate 稳定版清单](https://raw.githubusercontent.com/fqgate/FQGate-releases/main/releases/stable.json)，再按当前系统选择文件并核对大小和 SHA-256。GitHub 直接下载地址统一为 `https://github.com/fqgate/FQGate-releases/releases/download/fqgate-v<version>/<fileName>`。
 
 ### 手动安装
 
@@ -73,7 +75,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\installer\runtime\inst
 
 安装结束前，AI 应确认 FQGate 已经启动、名为 `fqgate` 的连接已经成功，并且能够读取工具列表或完成健康检查。如果连接尚未成功，应直接告诉用户“插件文件已安装，但 FQGate 尚未连接”。
 
-AI 助手会根据你使用的工具选择对应的正式安装包并完成配置。自动安装失败时，可以前往 [GitHub 发行页面](https://github.com/zhuyifang/tonghuasun-agent/releases) 或 [Gitee 发行页面](https://gitee.com/qicuo/tonghuasun-agent/releases) 手动下载。
+AI 助手会根据你使用的工具选择对应的正式安装包并完成配置。自动安装失败时，可以前往 [GitHub 发行页面](https://github.com/fqgate/FQGate-agent/releases) 或 [Gitee 发行页面](https://gitee.com/qicuo/tonghuasun-agent/releases) 手动下载。
 
 ## 选择你使用的 AI 工具
 
@@ -101,7 +103,7 @@ AI 助手会根据你使用的工具选择对应的正式安装包并完成配�
 
 > **响应更快、运行更稳定**
 >
-> [FQGate](https://github.com/zhuyifang/fqgate-releases) 是本项目使用的本机量化网关。与常见的网页抓取、脚本转发或多层接口封装方案相比，FQGate 最核心的优势是**响应更快、运行更稳定**：它以本机常驻服务直接连接行情与交易会话，减少中间转发和重复初始化，再通过统一的超时、错误码、请求编号和日志机制，让长时间运行时的失败边界更明确、问题更容易定位。
+> [FQGate](https://github.com/fqgate/FQGate-releases) 是本项目使用的本机量化网关。与常见的网页抓取、脚本转发或多层接口封装方案相比，FQGate 最核心的优势是**响应更快、运行更稳定**：它以本机常驻服务直接连接行情与交易会话，减少中间转发和重复初始化，再通过统一的超时、错误码、请求编号和日志机制，让长时间运行时的失败边界更明确、问题更容易定位。
 
 - 一个 FQGate 实例可以同时服务多个 AI 工具，不需要为每个工具重复维护数据连接。
 - 行情、账户、交易和插件界面使用统一接口，不同 AI 工具之间的体验更一致。

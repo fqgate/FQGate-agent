@@ -6,8 +6,8 @@
     "name": "zhuyifang",
     "url": "https://github.com/zhuyifang"
   },
-  "homepage": "https://github.com/zhuyifang/tonghuasun-agent",
-  "repository": "https://github.com/zhuyifang/tonghuasun-agent",
+  "homepage": "https://github.com/fqgate/FQGate-agent",
+  "repository": "https://github.com/fqgate/FQGate-agent",
   "license": "AGPL-3.0-only",
   "keywords": [
     "FQGate",
@@ -38,9 +38,9 @@
       "Account Data",
       "Trading"
     ],
-    "websiteURL": "https://github.com/zhuyifang/tonghuasun-agent",
-    "privacyPolicyURL": "https://github.com/zhuyifang/tonghuasun-agent/blob/main/docs/legal/PRIVACY.md",
-    "termsOfServiceURL": "https://github.com/zhuyifang/tonghuasun-agent/blob/main/docs/legal/TERMS.md",
+    "websiteURL": "https://github.com/fqgate/FQGate-agent",
+    "privacyPolicyURL": "https://github.com/fqgate/FQGate-agent/blob/main/docs/legal/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/fqgate/FQGate-agent/blob/main/docs/legal/TERMS.md",
     "defaultPrompt": [
       "查看 FQGate 中的行情登录状态。",
       "查询这只股票最近一个月的日 K 线。",

@@ -33,4 +33,4 @@ FQGate 程序、登录状态和日志需要按 FQGate 随包说明单独处理�
 
 ## 安全联系
 
-不要在 Issue、聊天、截图或日志附件中提交证券账号、密码、验证码、完整持仓和交易明细。安全问题请使用 [GitHub 私密安全报告](https://github.com/zhuyifang/tonghuasun-agent/security/advisories/new)。
+不要在 Issue、聊天、截图或日志附件中提交证券账号、密码、验证码、完整持仓和交易明细。安全问题请使用 [GitHub 私密安全报告](https://github.com/fqgate/FQGate-agent/security/advisories/new)。

@@ -6,7 +6,7 @@ Copyright (c) 2026 zhuyifang and contributors
 依据 AGPL-3.0 第 7(b) 条及 `ADDITIONAL_TERMS.md`，分发、部署或修改本项目时必须保留以下合理署名：
 
   基于 fqgate-agent 开发
-  https://github.com/zhuyifang/tonghuasun-agent
+  https://github.com/fqgate/FQGate-agent
 
 FQGate 编译包、第三方组件及个人图片不因与公开插件一同分发而自动获得 AGPL 授权，分别适用其权利人许可和随附声明。
 

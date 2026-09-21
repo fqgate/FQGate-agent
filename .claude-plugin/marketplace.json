@@ -9,7 +9,7 @@
       "name": "fqgate-agent",
       "source": {
         "source": "archive",
-        "url": "https://github.com/zhuyifang/tonghuasun-agent/releases/download/v1.0.0/fqgate-agent-claude-code-1.0.0.zip",
+        "url": "https://github.com/fqgate/FQGate-agent/releases/download/v1.0.0/fqgate-agent-claude-code-1.0.0.zip",
         "sha256": "f3ff9e9ef6a51c7528bf880b0b97968cf086fd90cd74d01101cb459e8200e497"
       },
       "description": "同花顺免费开源AI插件FQGate，为 Claude Code 提供本机 A 股行情、K 线、Level-2、资讯、账户查询和可选交易工具。",
@@ -17,8 +17,8 @@
       "author": {
         "name": "zhuyifang"
       },
-      "homepage": "https://github.com/zhuyifang/tonghuasun-agent/tree/main/AI-plugins/claude-code",
-      "repository": "https://github.com/zhuyifang/tonghuasun-agent",
+      "homepage": "https://github.com/fqgate/FQGate-agent/tree/main/AI-plugins/claude-code",
+      "repository": "https://github.com/fqgate/FQGate-agent",
       "license": "AGPL-3.0-only",
       "keywords": [
         "FQGate",

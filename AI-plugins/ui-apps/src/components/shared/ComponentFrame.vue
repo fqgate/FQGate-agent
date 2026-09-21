@@ -40,7 +40,7 @@ const connectionText = computed(() => {
         </a-tag>
         <a
           class="component-open-source-badge"
-          href="https://github.com/zhuyifang/tonghuasun-agent"
+          href="https://github.com/fqgate/FQGate-agent"
           target="_blank"
           rel="noopener noreferrer"
         >

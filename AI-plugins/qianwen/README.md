@@ -16,12 +16,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -Uninstall
 
 > **下载地址别弄混**
 >
-> - `FQGate.exe` 主程序：只从 [FQGate 官方发行仓库](https://github.com/zhuyifang/fqgate-releases)下载。
-> - AI 技能安装包：从 [tonghuasun-agent 发行页](https://github.com/zhuyifang/tonghuasun-agent/releases)下载。安装后会注册 `fqgate-realtime-stock-analyzer`（**同花顺免费实时数据代理**）和 `trade-execution`（**同花顺实盘交易代理**）。
+> - `FQGate.exe` 主程序：只从 [FQGate 官方发行仓库](https://github.com/fqgate/FQGate-releases)下载。
+> - AI 技能安装包：从 [FQGate-agent 发行页](https://github.com/fqgate/FQGate-agent/releases)下载。安装后会注册 `fqgate-realtime-stock-analyzer`（**同花顺免费实时数据代理**）和 `trade-execution`（**同花顺实盘交易代理**）。
 >
-> `fqgate-realtime-stock-analyzer` 是当前行情技能 ID。`tonghuasun-agent` 的发行页只放 AI 技能安装包，不提供 `FQGate.exe`。
+> `fqgate-realtime-stock-analyzer` 是当前行情技能 ID。`FQGate-agent` 的发行页只放 AI 技能安装包，不提供 `FQGate.exe`。
 
-FQGate 主程序从 [FQGate 官方下载页](https://github.com/zhuyifang/fqgate-releases/releases)获取。AI 安装时，先读取 [FQGate 稳定版清单](https://raw.githubusercontent.com/zhuyifang/fqgate-releases/main/releases/stable.json)，按当前系统选择文件并核对大小和 SHA-256。直接下载地址为 `https://github.com/zhuyifang/fqgate-releases/releases/download/fqgate-v<version>/<fileName>`。
+FQGate 主程序从 [FQGate 官方下载页](https://github.com/fqgate/FQGate-releases/releases)获取。AI 安装时，先读取 [FQGate 稳定版清单](https://raw.githubusercontent.com/fqgate/FQGate-releases/main/releases/stable.json)，按当前系统选择文件并核对大小和 SHA-256。直接下载地址为 `https://github.com/fqgate/FQGate-releases/releases/download/fqgate-v<version>/<fileName>`。
 
 安装完成后，为 FQGate 创建一个桌面快捷方式，方便以后启动。安装结束前，确认 FQGate 已经启动、名为 `fqgate` 的连接已经成功，并且能够读取工具列表或完成健康检查。
 

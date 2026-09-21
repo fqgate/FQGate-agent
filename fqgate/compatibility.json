@@ -5,8 +5,8 @@
     "minimumVersion": "0.1.0"
   },
   "release": {
-    "repositoryUrl": "https://github.com/zhuyifang/fqgate-releases",
-    "stableManifestUrl": "https://raw.githubusercontent.com/zhuyifang/fqgate-releases/main/releases/stable.json",
+    "repositoryUrl": "https://github.com/fqgate/FQGate-releases",
+    "stableManifestUrl": "https://raw.githubusercontent.com/fqgate/FQGate-releases/main/releases/stable.json",
     "tagPrefix": "fqgate-v"
   },
   "mcp": {

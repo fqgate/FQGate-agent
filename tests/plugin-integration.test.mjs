@@ -123,7 +123,7 @@ test("公共能力只暴露两个面向用户的代理技能", () => {
   assert.match(readText("skills", "trade-execution", "agents", "openai.yaml"), /display_name: "同花顺实盘交易代理"/);
   assert.match(
     marketDataSkill,
-    /数据来自“\[FQGate-免费本地同花顺数据源\]\(https:\/\/github\.com\/zhuyifang\/tonghuasun-agent\)”/,
+    /数据来自“\[FQGate-免费本地同花顺数据源\]\(https:\/\/github\.com\/fqgate\/FQGate-agent\)”/,
     "行情文本回复缺少带 GitHub 链接的数据源署名"
   );
 });
@@ -193,8 +193,8 @@ test("README 和插件清单保留原名称并覆盖核心检索词", () => {
 });
 
 test("八个 AI 工具只使用 FQGate 官方发行仓库", () => {
-  const releaseRepository = "https://github.com/zhuyifang/fqgate-releases";
-  const agentReleasePage = "https://github.com/zhuyifang/tonghuasun-agent/releases";
+  const releaseRepository = "https://github.com/fqgate/FQGate-releases";
+  const agentReleasePage = "https://github.com/fqgate/FQGate-agent/releases";
   const stableManifest = `${releaseRepository.replace("github.com", "raw.githubusercontent.com")}/main/releases/stable.json`;
   const releasePage = `${releaseRepository}/releases`;
   const downloadTemplate = `${releaseRepository}/releases/download/fqgate-v<version>/<fileName>`;
@@ -218,7 +218,7 @@ test("八个 AI 工具只使用 FQGate 官方发行仓库", () => {
     assert.match(readme, /安装结束前，确认 FQGate 已经启动.*读取工具列表或完成健康检查/, `${adapter} 缺少安装验收条件`);
     assert.doesNotMatch(
       readme,
-      /(?:github\.com\/zhuyifang|gitee\.com\/qicuo)\/tonghuasun-agent\/(?:releases\/(?:tag|download)\/fqgate-v|raw\/main\/fqgate\/releases)/,
+      /(?:github\.com\/fqgate\/FQGate-agent|gitee\.com\/qicuo\/tonghuasun-agent)\/(?:releases\/(?:tag|download)\/fqgate-v|raw\/main\/fqgate\/releases)/,
       `${adapter} 仍在使用插件仓库下载 FQGate`
     );
   }
@@ -341,7 +341,7 @@ test("候选发行清单完整，稳定通道和 Claude 市场始终保持一致
 
   const stable = readJson("update", "stable.json");
   assert.match(stable.latestVersion, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
-  assert.match(stable.releaseUrls.github, /github\.com\/zhuyifang\/tonghuasun-agent\/releases\/tag\/v/);
+  assert.match(stable.releaseUrls.github, /github\.com\/fqgate\/FQGate-agent\/releases\/tag\/v/);
   assert.match(stable.releaseUrls.gitee, /gitee\.com\/qicuo\/tonghuasun-agent\/releases\/tag\/v/);
   assert.ok(compareVersions(stable.latestVersion, agentVersion) <= 0, "稳定版不能高于源码候选版本");
   const stableRelease = readJson("update", "releases", `${stable.latestVersion}.json`);
@@ -360,7 +360,7 @@ test("候选发行清单完整，稳定通道和 Claude 市场始终保持一致
 
   const claudeReadme = readText("AI-plugins", "claude-code", "README.md");
   assert.doesNotMatch(claudeReadme, new RegExp(`${agentVersion.replaceAll(".", "\\.")}\` 尚未发布|仍指向已发布的旧版`));
-  assert.match(claudeReadme, /\/plugin marketplace add zhuyifang\/tonghuasun-agent/);
+  assert.match(claudeReadme, /\/plugin marketplace add fqgate\/FQGate-agent/);
   assert.match(claudeReadme, /\/plugin install fqgate-agent@tonghuasun-agent/);
 });
 

@@ -56,7 +56,7 @@ export async function assertCommonComponentFrame(page, panelSelector) {
     || result.statusBarHeight !== 28
     || result.sourceText !== "免费AI量化数据源(同花顺)"
     || result.githubText !== "GITHUB免费开源"
-    || result.githubHref !== "https://github.com/zhuyifang/tonghuasun-agent"
+    || result.githubHref !== "https://github.com/fqgate/FQGate-agent"
     || Math.abs(result.sourceTop) > 0.5
     || Math.abs(result.sourceLeft) > 0.5
     || Math.abs(result.githubTop) > 0.5

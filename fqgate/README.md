@@ -4,10 +4,10 @@ FQGate 主程序和 AI 插件是两个不同的产品，版本号也各自管理
 
 > **下载地址别弄混**
 >
-> - `FQGate.exe` 主程序：只从 [FQGate 官方发行页](https://github.com/zhuyifang/fqgate-releases)下载。
-> - AI 插件安装包：从 [tonghuasun-agent 发行页](https://github.com/zhuyifang/tonghuasun-agent/releases)下载；它负责把 FQGate 接入你使用的 AI 工具。
+> - `FQGate.exe` 主程序：只从 [FQGate 官方发行页](https://github.com/fqgate/FQGate-releases)下载。
+> - AI 技能安装包：从 [FQGate-agent 发行页](https://github.com/fqgate/FQGate-agent/releases)下载；安装后会注册 `fqgate-realtime-stock-analyzer`（**同花顺免费实时数据代理**）和 `trade-execution`（**同花顺实盘交易代理**），把 FQGate 接入你使用的 AI 工具。
 >
-> `tonghuasun-agent` 的发行页只放 AI 插件安装包，不提供 `FQGate.exe`。
+> `fqgate-realtime-stock-analyzer` 是当前行情技能 ID。`FQGate-agent` 的发行页只放 AI 技能安装包，不提供 `FQGate.exe`。
 
 ## 1.0.0 使用范围
 
@@ -16,7 +16,7 @@ FQGate 1.0.0 只提供行情，不再提供交易 API 和交易 MCP 工具。插
 ## 下载 FQGate
 
 - 国内下载：[Gitee FQGate 正式发行页](https://gitee.com/qicuo/fqgate-releases/releases)
-- 国外下载：[GitHub FQGate 正式发行页](https://github.com/zhuyifang/fqgate-releases/releases)
+- 国外下载：[GitHub FQGate 正式发行页](https://github.com/fqgate/FQGate-releases/releases)
 
 Windows 用户在仓库根目录运行下面这条命令即可：
 

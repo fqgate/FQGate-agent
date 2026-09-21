@@ -79,7 +79,7 @@ def create_fixture(root: Path, status="published"):
         "status": status,
         "version": version,
         "releaseUrls": {
-            "github": f"https://github.com/zhuyifang/tonghuasun-agent/releases/tag/v{version}",
+            "github": f"https://github.com/fqgate/FQGate-agent/releases/tag/v{version}",
             "gitee": f"https://gitee.com/qicuo/tonghuasun-agent/releases/tag/v{version}",
         },
         "releaseNotes": ["发布测试"],

@@ -80,7 +80,7 @@ async function buildRelease(version, artifactsDirectory, status, publishedAtUtc)
     version,
     publishedAtUtc,
     releaseUrls: {
-      github: `https://github.com/zhuyifang/tonghuasun-agent/releases/tag/v${version}`,
+      github: `https://github.com/fqgate/FQGate-agent/releases/tag/v${version}`,
       gitee: `https://gitee.com/qicuo/tonghuasun-agent/releases/tag/v${version}`
     },
     releaseNotes: await readReleaseNotes(version),
@@ -99,7 +99,7 @@ async function updateMarketplace(version, release) {
   if (!plugin) throw new Error("Claude marketplace 缺少 fqgate-agent。 ");
   const packageInfo = release.packages.find((item) => item.adapter === "claude-code");
   plugin.version = version;
-  plugin.source.url = `https://github.com/zhuyifang/tonghuasun-agent/releases/download/v${version}/${packageInfo.fileName}`;
+  plugin.source.url = `https://github.com/fqgate/FQGate-agent/releases/download/v${version}/${packageInfo.fileName}`;
   plugin.source.sha256 = packageInfo.sha256;
   await writeJson(path, marketplace);
 }

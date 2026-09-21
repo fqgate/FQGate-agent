@@ -81,8 +81,8 @@ function Assert-Package(
         throw "发行包清单版本不一致：$ManifestPath"
     }
 
-    $fqgateReleaseRepository = "https://github.com/zhuyifang/fqgate-releases"
-    $agentReleasePage = "https://github.com/zhuyifang/tonghuasun-agent/releases"
+    $fqgateReleaseRepository = "https://github.com/fqgate/FQGate-releases"
+    $agentReleasePage = "https://github.com/fqgate/FQGate-agent/releases"
     foreach ($documentPath in @("README.md", "docs\FQGate.md")) {
         $absoluteDocumentPath = Join-Path $PackageRoot $documentPath
         $document = Get-Content -LiteralPath $absoluteDocumentPath -Raw -Encoding UTF8
@@ -118,7 +118,7 @@ function Assert-Package(
                 throw "发行包包含 V1 或私有边界引用：$($file.FullName)：$forbidden"
             }
         }
-        if ($file.Extension -eq ".md" -and $text -match "(?:github\.com/zhuyifang|gitee\.com/qicuo)/tonghuasun-agent/(?:releases/(?:tag|download)/fqgate-v|raw/main/fqgate/releases)") {
+        if ($file.Extension -eq ".md" -and $text -match "(?:github\.com/fqgate/FQGate-agent|gitee\.com/qicuo/tonghuasun-agent)/(?:releases/(?:tag|download)/fqgate-v|raw/main/fqgate/releases)") {
             throw "发行包文档错误地从 AI 插件仓库下载 FQGate：$($file.FullName)"
         }
     }

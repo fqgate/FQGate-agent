@@ -70,8 +70,8 @@ try {
                     description = "同花顺免费开源AI插件FQGate，为 WorkBuddy 提供本机行情、K 线、Level-2、资讯、账户查询和可选交易工具。"
                     version = $agentVersion
                     author = [ordered]@{ name = "zhuyifang" }
-                    homepage = "https://github.com/zhuyifang/tonghuasun-agent/tree/main/AI-plugins/workbuddy"
-                    repository = "https://github.com/zhuyifang/tonghuasun-agent"
+                    homepage = "https://github.com/fqgate/FQGate-agent/tree/main/AI-plugins/workbuddy"
+                    repository = "https://github.com/fqgate/FQGate-agent"
                     license = "AGPL-3.0-only"
                     category = "productivity"
                 })

@@ -198,7 +198,7 @@ def write_output(name: str, value: str) -> None:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("stage", "publish"))
-    parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", "zhuyifang/tonghuasun-agent"))
+    parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", "fqgate/FQGate-agent"))
     parser.add_argument("--version", required=True)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--artifacts", type=Path)
