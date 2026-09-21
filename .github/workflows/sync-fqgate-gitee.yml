@@ -97,6 +97,8 @@ jobs:
                   f"https://gitee.com/api/v5/repos/qicuo/fqgate-releases/releases/tags/fqgate-v{version}",
                   gitee_headers,
               )
+              if not isinstance(gitee_release, dict) or not gitee_release.get("id"):
+                  raise KeyError("Gitee release does not exist yet")
               actual_assets = get_json(
                   f"https://gitee.com/api/v5/repos/qicuo/fqgate-releases/releases/{gitee_release['id']}/attach_files?per_page=100",
                   gitee_headers,
