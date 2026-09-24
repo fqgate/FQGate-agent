@@ -1,0 +1,34 @@
+schemaVersion: 1
+id: codex
+displayName: Codex
+adapter: codex
+
+executable:
+  command: codex
+  versionArgs:
+    - --version
+
+connection:
+  name: fqgate
+  transport: http
+  url: http://127.0.0.1:17281/mcp
+
+skills:
+  - id: fqgate-realtime-stock-analyzer
+    source: ../../skills/fqgate-realtime-stock-analyzer
+    adapterInstructions: ../../AI-plugins/codex/ADAPTER.md
+    target: ${CODEX_HOME}/skills/fqgate-realtime-stock-analyzer
+  - id: trade-execution
+    source: ../../skills/trade-execution
+    adapterInstructions: ../../AI-plugins/codex/ADAPTER.md
+    target: ${CODEX_HOME}/skills/trade-execution
+
+backup:
+  paths:
+    - ${CODEX_HOME}/config.toml
+    - ${CODEX_HOME}/skills/fqgate-realtime-stock-analyzer
+    - ${CODEX_HOME}/skills/trade-execution
+
+restart:
+  required: true
+  reason: 已经运行的 Codex 会话可能不会自动重新加载 MCP 配置与 Skill。

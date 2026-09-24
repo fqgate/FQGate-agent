@@ -1,0 +1,29 @@
+schemaVersion: 1
+id: claude-code
+displayName: Claude Code
+adapter: claude-code
+
+executable:
+  command: claude
+  versionArgs:
+    - --version
+  minimumVersion: 2.1.224
+
+marketplace:
+  source: fqgate/FQGate-agent
+  name: tonghuasun-agent
+  scope: user
+
+plugin:
+  id: fqgate-agent@tonghuasun-agent
+  scope: user
+
+backup:
+  paths:
+    - ${CLAUDE_USER_CONFIG}
+    - ${CLAUDE_CONFIG_DIR}/plugins/known_marketplaces.json
+    - ${CLAUDE_CONFIG_DIR}/plugins/installed_plugins.json
+
+restart:
+  required: true
+  reason: Claude Code 需要重新加载插件，当前会话才能使用新安装的 Agent。
