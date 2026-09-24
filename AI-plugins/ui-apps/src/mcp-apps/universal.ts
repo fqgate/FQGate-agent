@@ -33,6 +33,21 @@ const TOOL_TO_COMPONENT: Record<string, ComponentKey> = {
   fqgate_market_level2_orders: "order-flow"
 };
 
+const RESOURCE_TO_COMPONENT: Record<string, ComponentKey> = {
+  login: "login",
+  candle: "candle",
+  information: "information",
+  "market-quotes": "market-quotes",
+  "order-flow": "order-flow"
+};
+
+declare global {
+  interface Window {
+    /** FQGate 在 resources/read 时注入的逻辑页面提示。 */
+    __FQGATE_MCP_APP_HINT__?: unknown;
+  }
+}
+
 type ComponentKey = keyof typeof COMPONENT_TITLES;
 const COMPONENT_TITLES = {
   login: "登录",
@@ -45,19 +60,75 @@ const COMPONENT_TITLES = {
 /** MCP 宿主和本机预览共用的单一资源入口。 */
 export async function mountMcpUi(): Promise<void> {
   const runtime = await connectMcpApp("fqgate-mcp-ui");
-  const toolName = await readOriginatingToolName(runtime);
-  const component = toolName ? TOOL_TO_COMPONENT[toolName] : undefined;
+  const snapshot = await readOriginatingToolSnapshot(runtime);
+  const component = resolveToolComponent(snapshot.name)
+    ?? resolveComponentHint(window.__FQGATE_MCP_APP_HINT__)
+    ?? resolveComponentFromLocation();
   if (!component) {
-    throw new Error(`无法确定 MCP UI 对应的组件：${toolName ?? "未知工具"}。`);
+    throw new Error(`无法确定 MCP UI 对应的组件：${snapshot.name ?? "未知工具"}。`);
   }
   await mountComponent(runtime, component);
 }
 
-async function readOriginatingToolName(runtime: McpAppRuntime): Promise<string | undefined> {
-  const initial = runtime.getOriginatingToolSnapshot().name;
-  if (initial) return initial;
+async function readOriginatingToolSnapshot(runtime: McpAppRuntime) {
+  const initial = runtime.getOriginatingToolSnapshot();
+  if (initial.name) return initial;
   await runtime.waitForToolResult(2_000);
-  return runtime.getOriginatingToolSnapshot().name;
+  return runtime.getOriginatingToolSnapshot();
+}
+
+function resolveToolComponent(toolName: string | undefined): ComponentKey | undefined {
+  return toolName ? TOOL_TO_COMPONENT[toolName] : undefined;
+}
+
+/**
+ * 资源预览模式不一定有来源工具，使用 FQGate 传入的资源提示作为兜底。
+ * 提示只包含已验签清单中的 id/URI，不会改变组件或接口权限。
+ */
+function resolveComponentHint(value: unknown): ComponentKey | undefined {
+  if (typeof value === "string") return resolveResourceComponent(value);
+  if (!isJsonObject(value)) return undefined;
+  return resolveResourceComponent(stringValue(value.id))
+    ?? resolveResourceComponent(stringValue(value.resourceUri))
+    ?? resolveResourceComponent(stringValue(value.resource_uri));
+}
+
+function resolveComponentFromLocation(): ComponentKey | undefined {
+  const query = new URLSearchParams(window.location.search);
+  const candidates = [
+    query.get("component"),
+    query.get("app"),
+    query.get("resourceUri"),
+    query.get("resource_uri"),
+    window.location.hash.replace(/^#/, "")
+  ];
+  for (const candidate of candidates) {
+    const component = resolveResourceComponent(candidate ?? undefined);
+    if (component) return component;
+  }
+  return resolveResourceComponent(window.location.pathname);
+}
+
+function resolveResourceComponent(value: string | undefined): ComponentKey | undefined {
+  if (!value) return undefined;
+  let normalized = value.trim();
+  try {
+    normalized = decodeURIComponent(normalized);
+  } catch {
+    // 无法解码时继续使用原值；后续只按固定资源名匹配。
+  }
+  normalized = normalized.replace(/^ui:\/\/fqgate\//, "");
+  normalized = normalized.split(/[?#]/, 1)[0].replace(/^.*\//, "");
+  normalized = normalized.replace(/\.html$/i, "");
+  return RESOURCE_TO_COMPONENT[normalized];
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 async function mountComponent(runtime: McpAppRuntime, component: ComponentKey): Promise<void> {
