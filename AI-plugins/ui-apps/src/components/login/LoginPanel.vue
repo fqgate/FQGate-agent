@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 import ComponentFrame from "@/components/shared/ComponentFrame.vue";
-import type { LoginService, QrLoginStatus, SmsCaptcha } from "@/shared/contracts";
+import type { LoginService, LoginState, QrLoginStatus, SmsCaptcha } from "@/shared/contracts";
 import { isQrLoginFlowExpiredError, isSmsCaptchaRejectedError } from "@/shared/loginErrors";
 
 const props = withDefaults(defineProps<{
@@ -20,6 +20,7 @@ const emit = defineEmits<{
 
 type SmsStep = "phone" | "captcha" | "code" | "success";
 type NoticeType = "info" | "success" | "warning" | "error";
+const cachedClientPathStorageKey = "fqgate:ths-client-path";
 
 const activeTab = ref("qr");
 const qrBusy = ref(false);
@@ -28,6 +29,11 @@ const qrImageUrl = ref("");
 const qrNotice = ref("点击下方按钮获取登录二维码。");
 const qrNoticeType = ref<NoticeType>("info");
 let qrPollTimer: number | undefined;
+
+const cachedClientPath = ref(readCachedClientPath());
+const cachedLoginBusy = ref(false);
+const cachedLoginNotice = ref("");
+const cachedLoginNoticeType = ref<NoticeType>("info");
 
 const smsBusy = ref(false);
 const smsStep = ref<SmsStep>("phone");
@@ -39,6 +45,21 @@ const sliderPositionX = ref(0);
 const sliderPieceSize = ref({ width: 0, height: 0 });
 const smsNotice = ref("");
 const smsNoticeType = ref<NoticeType>("info");
+const loginState = ref<LoginState>({ connected: false });
+const loginStateBusy = ref(true);
+const logoutBusy = ref(false);
+const loginStateNotice = ref("");
+
+const loggedIn = computed(() => Boolean(
+  loginState.value.connected
+  && loginState.value.method !== "guest"
+  && (loginState.value.account || loginState.value.userId)
+));
+const accountLabel = computed(
+  () => loginState.value.account || loginState.value.userId || "当前行情账号"
+);
+const isWindows = computed(() => typeof navigator !== "undefined"
+  && (/windows/i.test(navigator.userAgent) || /win/i.test(navigator.platform)));
 
 const sliderMax = computed(() => {
   if (!captcha.value) return 0;
@@ -71,6 +92,26 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "操作失败，请稍后重试。";
 }
 
+function readCachedClientPath(): string {
+  try {
+    return window.localStorage.getItem(cachedClientPathStorageKey) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function rememberCachedClientPath(path: string): void {
+  try {
+    window.localStorage.setItem(cachedClientPathStorageKey, path);
+  } catch {
+    // 浏览器禁用本地存储时不影响本次快捷登录。
+  }
+}
+
+function isWindowsAbsolutePath(path: string): boolean {
+  return /^(?:[a-zA-Z]:[\\/]|\\\\)/.test(path);
+}
+
 function handleCaptchaPieceLoad(event: Event): void {
   const image = event.currentTarget;
   if (!(image instanceof HTMLImageElement)) return;
@@ -95,6 +136,7 @@ async function beginQrLogin(): Promise<void> {
   qrBusy.value = true;
   qrNotice.value = "正在获取二维码…";
   qrNoticeType.value = "info";
+  loginStateNotice.value = "";
   try {
     const session = await props.service.beginQrLogin();
     qrFlowId.value = session.flowId;
@@ -109,6 +151,70 @@ async function beginQrLogin(): Promise<void> {
   }
 }
 
+async function refreshLoginState(): Promise<void> {
+  try {
+    loginState.value = await props.service.getLoginState();
+  } catch (error) {
+    loginState.value = { connected: false };
+    loginStateNotice.value = errorMessage(error);
+  }
+}
+
+async function initializeLogin(): Promise<void> {
+  loginStateBusy.value = true;
+  await refreshLoginState();
+  loginStateBusy.value = false;
+  if (!loggedIn.value) await beginQrLogin();
+}
+
+async function logout(): Promise<void> {
+  logoutBusy.value = true;
+  loginStateNotice.value = "正在退出登录…";
+  try {
+    await props.service.logout();
+    loginState.value = { connected: false };
+    loginStateNotice.value = "";
+    activeTab.value = "qr";
+    restartSmsLogin();
+    await beginQrLogin();
+  } catch (error) {
+    loginStateNotice.value = errorMessage(error);
+  } finally {
+    logoutBusy.value = false;
+  }
+}
+
+async function cachedLogin(): Promise<void> {
+  if (!isWindows.value) {
+    cachedLoginNotice.value = "本机快捷登录仅支持 Windows。";
+    cachedLoginNoticeType.value = "warning";
+    return;
+  }
+  const clientPath = cachedClientPath.value.trim();
+  if (!isWindowsAbsolutePath(clientPath)) {
+    cachedLoginNotice.value = "请输入同花顺远航版安装目录的绝对路径，例如 E:\\同花顺远航版。";
+    cachedLoginNoticeType.value = "warning";
+    return;
+  }
+  cachedLoginBusy.value = true;
+  cachedLoginNotice.value = "正在读取本机同花顺登录凭据…";
+  cachedLoginNoticeType.value = "info";
+  try {
+    const result = await props.service.cachedLogin(clientPath);
+    if (!result.connected) throw new Error("行情服务未连接。");
+    rememberCachedClientPath(clientPath);
+    cachedLoginNotice.value = "本机快捷登录成功。";
+    cachedLoginNoticeType.value = "success";
+    await refreshLoginState();
+    emit("success");
+  } catch (error) {
+    cachedLoginNotice.value = errorMessage(error);
+    cachedLoginNoticeType.value = "error";
+  } finally {
+    cachedLoginBusy.value = false;
+  }
+}
+
 async function pollQrLogin(): Promise<void> {
   const flowId = qrFlowId.value;
   if (flowId === undefined || activeTab.value !== "qr") return;
@@ -119,6 +225,7 @@ async function pollQrLogin(): Promise<void> {
       qrImageUrl.value = "";
       qrNotice.value = "行情登录成功。";
       qrNoticeType.value = "success";
+      await refreshLoginState();
       emit("success");
       return;
     }
@@ -229,6 +336,7 @@ async function completeSmsLogin(): Promise<void> {
     if (!result.connected) throw new Error("行情服务未连接。");
     smsStep.value = "success";
     smsNotice.value = "";
+    await refreshLoginState();
     emit("success");
   } catch (error) {
     smsNotice.value = errorMessage(error);
@@ -250,7 +358,7 @@ function restartSmsLogin(): void {
 onBeforeUnmount(() => {
   stopQrPolling();
 });
-onMounted(() => void beginQrLogin());
+onMounted(() => void initializeLogin());
 </script>
 
 <template>
@@ -260,7 +368,21 @@ onMounted(() => void beginQrLogin());
       :title="embedded ? undefined : '行情登录'"
       :bordered="!embedded"
     >
-    <a-tabs :active-key="activeTab" @change="handleTabChange">
+    <div v-if="loginStateBusy" class="login-state-loading">
+      <a-spin tip="正在读取登录状态…" />
+    </div>
+
+    <div v-else-if="loggedIn" class="logged-in-state">
+      <a-result status="success" title="已登录">
+        <template #subtitle>当前账号：{{ accountLabel }}</template>
+        <template #extra>
+          <a-button type="primary" :loading="logoutBusy" @click="logout">退出登录</a-button>
+        </template>
+      </a-result>
+      <a-alert v-if="loginStateNotice" type="error" show-icon>{{ loginStateNotice }}</a-alert>
+    </div>
+
+    <a-tabs v-else :active-key="activeTab" @change="handleTabChange">
       <a-tab-pane key="qr" title="App 扫码">
         <div class="qr-flow">
           <div class="qr-stage">
@@ -279,6 +401,33 @@ onMounted(() => void beginQrLogin());
           <a-button type="primary" long :loading="qrBusy" @click="beginQrLogin">
             刷新二维码
           </a-button>
+        </div>
+      </a-tab-pane>
+
+      <a-tab-pane v-if="isWindows" key="cached" title="本机快捷登录">
+        <div class="cached-login-flow">
+          <a-form :model="{ cachedClientPath }" layout="vertical">
+            <a-form-item label="同花顺远航版安装目录">
+              <a-input
+                v-model="cachedClientPath"
+                allow-clear
+                placeholder="例如：E:\\同花顺远航版"
+              />
+            </a-form-item>
+          </a-form>
+          <a-alert type="info" show-icon>
+            请输入运行 FQGate 的这台电脑上的安装目录；需要客户端已保存过可复用的登录凭据。
+          </a-alert>
+          <div class="cached-login-action">
+            <a-button type="primary" long :loading="cachedLoginBusy" @click="cachedLogin">
+              本机快捷登录
+            </a-button>
+          </div>
+          <div class="cached-login-notice-slot">
+            <a-alert v-if="cachedLoginNotice" :type="cachedLoginNoticeType" show-icon>
+              {{ cachedLoginNotice }}
+            </a-alert>
+          </div>
         </div>
       </a-tab-pane>
 
@@ -368,6 +517,51 @@ onMounted(() => void beginQrLogin());
   box-sizing: border-box;
   width: 100%;
   --login-content-height: 380px;
+}
+
+.login-state-loading,
+.logged-in-state {
+  box-sizing: border-box;
+  min-height: var(--login-content-height);
+  padding: 48px 16px;
+}
+
+.login-state-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logged-in-state :deep(.arco-result) {
+  padding: 48px 16px 24px;
+}
+
+.cached-login-flow {
+  box-sizing: border-box;
+  display: grid;
+  height: var(--login-content-height);
+  grid-template-rows: auto auto 28px 48px;
+  align-content: start;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.cached-login-flow :deep(.arco-form-item) {
+  margin-bottom: 0;
+}
+
+.cached-login-action {
+  width: 100%;
+}
+
+.cached-login-notice-slot {
+  height: 48px;
+}
+
+.cached-login-notice-slot :deep(.arco-alert) {
+  box-sizing: border-box;
+  height: 100%;
+  align-items: center;
 }
 
 .qr-stage {

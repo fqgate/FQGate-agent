@@ -24,7 +24,9 @@ try {
   const marketDetailRequests = [];
   page.on("request", (request) => {
     const path = new URL(request.url()).pathname;
-    if (isMarketDetailPath(path)) marketDetailRequests.push(path);
+    if (/\/(history\/(depth|tick)|level2\/(depth|transactions))$/.test(path)) {
+      marketDetailRequests.push(path);
+    }
   });
   const recordMarketRequest = async (route) => {
     const body = route.request().postDataJSON();
@@ -205,15 +207,18 @@ async function assertLevel2MarketDepthSelection(browser) {
   const level2Requests = [];
   level2Page.on("request", (request) => {
     const path = new URL(request.url()).pathname;
-    if (isMarketDetailPath(path)) level2Requests.push(path);
+    if (/\/(history\/(depth|tick)|level2\/(depth|transactions))$/.test(path)) {
+      level2Requests.push(path);
+    }
   });
   await routeHealth(level2Page, true);
-  await level2Page.route("**/v2/market/level2/order-books/ten-level", (route) => route.fulfill(apiResponse({
-    items: [{
-      security: { market: "XSHG", code: "600151" },
+  await level2Page.route("**/v1/market/level2/depth", (route) => route.fulfill(apiResponse({
+    depth: [{
+      security: "USHA600151",
       bids: depthLevels(10.15, -0.01, 12_000),
       asks: depthLevels(10.16, 0.01, 11_000)
-    }]
+    }],
+    records: []
   })));
   const level2Transactions = Array.from({ length: 500 }, (_, index) => semanticTransaction(
     500 - index,
@@ -249,7 +254,9 @@ async function assertLevel2MarketDepthSelection(browser) {
   const fallbackRequests = [];
   fallbackPage.on("request", (request) => {
     const path = new URL(request.url()).pathname;
-    if (isMarketDetailPath(path)) fallbackRequests.push(path);
+    if (/\/(history\/(depth|tick)|level2\/(depth|transactions))$/.test(path)) {
+      fallbackRequests.push(path);
+    }
   });
   await routeHealth(fallbackPage, true);
   const denyLevel2 = (route) => route.fulfill({
@@ -257,7 +264,7 @@ async function assertLevel2MarketDepthSelection(browser) {
     contentType: "application/json",
     body: JSON.stringify({ code: 3006, message: "当前账户未开通所需行情权限", data: {} })
   });
-  await fallbackPage.route("**/v2/market/level2/order-books/ten-level", denyLevel2);
+  await fallbackPage.route("**/v1/market/level2/depth", denyLevel2);
   await fallbackPage.route("**/v1/market/level2/transactions", denyLevel2);
   await routeBasicMarketDetails(fallbackPage);
   await fallbackPage.goto(targetUrl, { waitUntil: "domcontentloaded" });
@@ -267,9 +274,9 @@ async function assertLevel2MarketDepthSelection(browser) {
   await fallbackModeTag.hover();
   await fallbackPage.getByText("登录同花顺查看L2", { exact: true }).waitFor();
   for (const path of [
-    "/v2/market/level2/order-books/ten-level",
+    "/v1/market/level2/depth",
     "/v1/market/level2/transactions",
-    "/v2/market/order-books/five-level",
+    "/v1/market/history/depth",
     "/v1/market/history/tick"
   ]) {
     if (!fallbackRequests.includes(path)) {
@@ -429,12 +436,19 @@ async function routeHealth(page, level2Permission) {
 }
 
 async function routeBasicMarketDetails(page) {
-  await page.route("**/v2/market/order-books/five-level", (route) => route.fulfill(apiResponse({
-    items: [{
-      security: { market: "XSHG", code: "600151" },
-      bids: depthLevels(10.15, -0.01, 12_000).slice(0, 5),
-      asks: depthLevels(10.16, 0.01, 11_000).slice(0, 5)
-    }]
+  await page.route("**/v1/market/history/depth", (route) => route.fulfill(apiResponse({
+    records: [[{
+      "24": field(10.15), "25": field(12_000),
+      "26": field(10.14), "27": field(11_000),
+      "28": field(10.13), "29": field(10_000),
+      "150": field(10.12), "151": field(9_000),
+      "154": field(10.11), "155": field(8_000),
+      "30": field(10.16), "31": field(7_000),
+      "32": field(10.17), "33": field(6_000),
+      "34": field(10.18), "35": field(5_000),
+      "152": field(10.19), "153": field(4_000),
+      "156": field(10.20), "157": field(3_000)
+    }]]
   })));
   await page.route("**/v1/market/history/tick", (route) => route.fulfill(apiResponse({
     records: [[
@@ -557,21 +571,14 @@ async function assertMarketDepthPanel(page, placement, requests) {
 
 function assertPermissionSelectedEndpoints(mode, requests) {
   const expected = mode === "level2"
-    ? ["/v2/market/level2/order-books/ten-level", "/v1/market/level2/transactions"]
-    : ["/v2/market/order-books/five-level", "/v1/market/history/tick"];
+    ? ["/v1/market/level2/depth", "/v1/market/level2/transactions"]
+    : ["/v1/market/history/depth", "/v1/market/history/tick"];
   const unexpected = mode === "level2"
-    ? ["/v2/market/order-books/five-level", "/v1/market/history/tick"]
-    : ["/v2/market/level2/order-books/ten-level", "/v1/market/level2/transactions"];
+    ? ["/v1/market/history/depth", "/v1/market/history/tick"]
+    : ["/v1/market/level2/depth", "/v1/market/level2/transactions"];
   if (expected.some((path) => !requests.includes(path)) || unexpected.some((path) => requests.includes(path))) {
     throw new Error(`盘口没有按权限选择接口：${JSON.stringify({ mode, requests })}`);
   }
-}
-
-function isMarketDetailPath(path) {
-  return path === "/v2/market/order-books/five-level"
-    || path === "/v2/market/level2/order-books/ten-level"
-    || path === "/v1/market/history/tick"
-    || path === "/v1/market/level2/transactions";
 }
 
 async function waitForMarketDepthOutcome(page) {

@@ -68,7 +68,8 @@ try {
     });
   });
   await page.route("**/v1/market/health", (route) => {
-    healthRequestTimes.push(Date.now());
+    // 登录页现在会先读取一次账号状态；重连验收只统计服务丢失后的探活请求。
+    if (serviceLostAt !== 0) healthRequestTimes.push(Date.now());
     return route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({ code: 0, message: "ok", data: {} })
@@ -112,6 +113,15 @@ try {
   await page.locator(".login-panel").waitFor();
   await expectText(page, "App 扫码");
   await expectText(page, "短信验证码");
+  const windowsBrowser = await page.evaluate(() => /windows|win/i.test(`${navigator.userAgent} ${navigator.platform}`));
+  if (windowsBrowser) {
+    await page.locator(".arco-tabs-tab-title", { hasText: "本机快捷登录" }).waitFor({ state: "visible" });
+    await page.locator(".arco-tabs-tab-title", { hasText: "本机快捷登录" }).click();
+    await page.locator(".cached-login-flow input").fill("relative/path");
+    await page.getByRole("button", { name: "本机快捷登录" }).click();
+    await expectText(page, "请输入同花顺远航版安装目录的绝对路径，例如 E:\\同花顺远航版。");
+    await page.locator(".arco-tabs-tab-title", { hasText: "App 扫码" }).click();
+  }
   await page.locator(".qr-image").waitFor({ state: "visible" });
   if (qrBeginRequests !== 1) throw new Error(`页面未自动获取二维码：requestCount=${qrBeginRequests}`);
   await assertQrStageHeight(page);
@@ -208,6 +218,14 @@ try {
       code: 0,
       message: "ok",
       data: { flow_id: 1, status: "waiting_for_scan" }
+    })
+  }));
+  await mobilePage.route("**/v1/market/health", (route) => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({
+      code: 0,
+      message: "ok",
+      data: { connected: false, account: null, login_method: "guest" }
     })
   }));
   await mobilePage.goto(targetUrl, { waitUntil: "domcontentloaded" });

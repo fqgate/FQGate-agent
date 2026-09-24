@@ -1,11 +1,12 @@
 import { ConfigProvider } from "@arco-design/web-vue";
 import { createApp, h, type Component } from "vue";
+import appConfig from "../../mcp-apps/apps.json";
 
 import { McpAppRuntime, type JsonObject } from "@/adapters/mcp-app";
 import type { MarketSecurity } from "@/shared/contracts";
 import "@/style.css";
 
-export const MCP_APP_VERSION = "0.1.2";
+export const MCP_APP_VERSION = appConfig.bundleVersion;
 export const FQGATE_LOOPBACK_URL = "http://127.0.0.1:17281";
 
 export async function connectMcpApp(

@@ -15,21 +15,28 @@ npm run dev
 
 插件界面使用 MCP Apps 标准与支持该标准的 AI 工具通信。页面入口、标题、版本和接口绑定统一维护在 `mcp-apps/apps.json`。新增页面后只改这一份配置，构建、开发同步和正式发布都会自动读取它。
 
-执行以下命令可生成供 FQGate 返回的独立界面资源和开发清单：
+执行以下命令会生成唯一的通用 UI 构建物。HTTP 预览和 MCP 宿主都使用这份文件，只在启动时选择不同的通信模式：
 
 ```powershell
 npm run build:mcp-apps
 ```
 
-产物位于 `dist/mcp-apps/`，包括 `manifest.json` 和清单列出的所有自包含 HTML。当前页面包括：
+产物位于 `dist/mcp-apps/`，包括 `manifest.json` 和唯一的 `index.html`。清单仍保留逻辑页面与接口绑定：
 
-- `login.html`：行情登录。
-- `candle.html`：个股行情。
-- `information.html`：市场快讯、个股资讯和公告。
-- `market-quotes.html`：多股行情预留入口。
-- `order-flow.html`：L2 逐笔委托预留入口。
+- `login`：行情登录。
+- `candle`：个股行情。
+- `information`：市场快讯、个股资讯和公告。
+- `market-quotes`：多股行情。
+- `order-flow`：L2 逐笔委托。
 
-每个文件都已包含自身所需的脚本和样式，可由 FQGate 直接作为 `ui://fqgate/*.html` 资源返回。开发预览外壳不会进入这些文件。`manifest.json` 同时记录文件大小和 SHA-256，FQGate 可在加载前校验页面是否完整。
+`index.html` 已包含所有组件、HTTP/MCP 两种通信适配器及其脚本和样式。FQGate 仍按 `ui://fqgate/*.html` 的逻辑资源地址绑定工具，但这些资源共享同一份文件和 SHA-256。`manifest.json` 记录共享文件的校验值，FQGate 可在加载前校验页面是否完整。
+
+直接访问 FQGate 开发预览时使用 HTTP 模式：
+
+```text
+http://127.0.0.1:17281/mcp-ui/#login
+http://127.0.0.1:17281/mcp-ui/#candle
+```
 
 ## 开发发布
 
@@ -37,7 +44,7 @@ npm run build:mcp-apps
 npm run dev:publish
 ```
 
-命令首次运行会检查类型、构建全部页面，并发布到 `FQGate/target/debug/mcp-apps/`；之后监听 `src/` 和 `mcp-apps/`，修改后自动重新构建、校验并发布。可通过 `FQGATE_DEV_MCP_APPS_DIR` 指定其他开发目录。
+命令首次运行会检查类型、只构建一次通用 UI，并发布到 `FQGate/target/debug/mcp-apps/`；之后监听 `src/` 和 `mcp-apps/`，修改后自动重新构建、校验并发布。FQGate 的 `/mcp-ui/` 预览也直接读取这份开发资源。可通过 `FQGATE_DEV_MCP_APPS_DIR` 指定其他开发目录。
 
 也可以在公开仓库根目录执行 `npm run dev:publish`。
 
@@ -59,7 +66,7 @@ npm run release:mcp-apps -- --signing-key-file D:\安全目录\mcp-apps-private.
 - `src/adapters/local-api/`：FQGate 本机接口适配。
 - `src/adapters/mcp-app/`：MCP Apps 标准通信和工具调用适配。
 - `src/adapters/vendors/`：不同 AI 工具的接入适配。
-- `src/mcp-apps/`：独立资源入口，只挂载公共组件，不维护另一份界面。
+- `mcp-apps/apps.json`：逻辑页面、版本和接口绑定清单；不再维护多份 HTML 入口。
 - `src/shared/`：公共类型和约定。
 
 界面使用组件默认样式；支持统一尺寸的组件由根配置统一设为 `small`。
@@ -78,9 +85,9 @@ npm run release:mcp-apps -- --signing-key-file D:\安全目录\mcp-apps-private.
 
 ## 维护约定
 
-`src/components/` 是唯一界面源码。任何 AI 工具适配层都只能处理通信、AI 工具能力和入口挂载，不能复制组件模板或另建专用布局。组件布局发生变化后，重新执行 `npm run build:mcp-apps` 即可更新全部入口。
+`src/components/` 是唯一界面源码。任何 AI 工具适配层都只能处理通信、AI 工具能力和入口挂载，不能复制组件模板或另建专用布局。组件布局发生变化后，重新执行 `npm run build:universal` 即可同时更新 HTTP 预览和 MCP 资源。
 
-执行以下命令可检查首屏工具结果不会重复请求，并验证五个资源均为完整的自包含文件：
+执行以下命令可检查首屏工具结果不会重复请求，并验证五个逻辑资源共享同一份完整的自包含文件：
 
 ```powershell
 npm run test:mcp-apps

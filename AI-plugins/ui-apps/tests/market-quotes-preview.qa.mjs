@@ -18,7 +18,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const quoteRequests = [];
   const activeBeforePage = await activeSubscriptionCount(page);
-  await page.route("**/v2/market/quotes", async (route) => {
+  await page.route("**/v1/market/realtime/quote", async (route) => {
     quoteRequests.push(route.request().postDataJSON());
     await route.continue();
   });
@@ -96,10 +96,10 @@ async function assertAutomaticRecovery(browser) {
   let shanghaiRequests = 0;
   let serviceLostAt = 0;
   const healthRequestTimes = [];
-  await recoveryPage.route("**/v2/market/quotes", async (route) => {
+  await recoveryPage.route("**/v1/market/realtime/quote", async (route) => {
     const body = route.request().postDataJSON();
     const market = body?.securities?.[0]?.market;
-    if (market !== "XSHG") return route.continue();
+    if (market !== "USHA") return route.continue();
     shanghaiRequests += 1;
     if (shanghaiRequests === 1) {
       serviceLostAt = Date.now();
@@ -157,23 +157,8 @@ async function assertRealRequestBatches(requests) {
     if (batchMarkets.size !== 1) throw new Error(`单次行情请求混入多个市场：${JSON.stringify(request)}`);
     markets.add(request.securities[0].market);
   }
-  if (!markets.has("XSHG") || !markets.has("XSHE")) {
+  if (!markets.has("USHA") || !markets.has("USZA")) {
     throw new Error(`预览行情市场不完整：${JSON.stringify([...markets])}`);
-  }
-  const expectedFields = [
-    "security_name",
-    "latest",
-    "previous_close",
-    "open",
-    "high",
-    "low",
-    "volume",
-    "transaction_amount"
-  ];
-  for (const request of requests) {
-    if (JSON.stringify(request.fields) !== JSON.stringify(expectedFields)) {
-      throw new Error(`行情快照没有使用 V2 语义字段：${JSON.stringify(request)}`);
-    }
   }
 }
 

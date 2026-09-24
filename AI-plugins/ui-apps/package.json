@@ -7,7 +7,10 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "npm run typecheck && vite build",
-    "build:mcp-apps": "npm run typecheck && node scripts/build-mcp-apps.mjs",
+    "build:universal": "npm run typecheck && node scripts/build-mcp-apps.mjs",
+    "build:mcp-ui": "npm run build:universal",
+    "build:mcp-apps": "npm run build:universal",
+    "publish:dev": "npm run build:universal && node scripts/dev-publish-mcp-apps.mjs",
     "dev:publish": "npm run typecheck && node --watch-preserve-output --watch-path=src --watch-path=mcp-apps scripts/dev-publish-mcp-apps.mjs",
     "release:mcp-apps": "node scripts/release-mcp-apps.mjs",
     "test:mcp-apps": "tsx tests/openai-component-bridge.qa.ts && tsx tests/mcp-fqgate-fetch.qa.ts && tsx tests/mcp-polling-connection.qa.ts && npm run build:mcp-apps && node tests/mcp-apps-build.qa.mjs && node tests/mcp-apps-release.qa.mjs",

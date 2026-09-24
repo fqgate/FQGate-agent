@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-labelledby="title desc">
+  <title id="title">未提供头像</title>
+  <desc id="desc">中性头像占位图</desc>
+  <rect width="80" height="80" rx="16" fill="#e5e7eb"/>
+  <circle cx="40" cy="30" r="14" fill="#9ca3af"/>
+  <path d="M16 68c2-14 11-22 24-22s22 8 24 22" fill="#9ca3af"/>
+</svg>

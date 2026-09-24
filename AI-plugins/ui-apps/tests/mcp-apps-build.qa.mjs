@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 const outputDirectory = resolve("dist", "mcp-apps");
 const config = JSON.parse(await readFile(resolve("mcp-apps", "apps.json"), "utf8"));
 const manifest = JSON.parse(await readFile(resolve(outputDirectory, "manifest.json"), "utf8"));
-const expectedFiles = ["manifest.json", ...config.apps.map((app) => app.file)].sort();
+const expectedFiles = ["manifest.json", ...new Set(config.apps.map((app) => app.file))].sort();
 const actualFiles = (await readdir(outputDirectory)).sort();
 
 if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) {
@@ -21,6 +21,10 @@ for (const [field, expected] of [
   if (manifest[field] !== expected) throw new Error(`manifest.json 的 ${field} 无效。`);
 }
 if (manifest.apps.length !== config.apps.length) throw new Error("manifest.json 没有覆盖全部应用。");
+const sharedFiles = new Set(config.apps.map((app) => app.file));
+if (sharedFiles.size !== 1 || !sharedFiles.has("index.html")) {
+  throw new Error("MCP Apps 必须只使用一个共享 HTML 构建物。");
+}
 
 for (const configuredApp of config.apps) {
   const app = manifest.apps.find((candidate) => candidate.id === configuredApp.id);
@@ -46,11 +50,8 @@ for (const configuredApp of config.apps) {
   if (!html.includes("ui/initialize") || !html.includes("ui/notifications/tool-input")) {
     throw new Error(`${app.file} 没有包含 MCP Apps 标准通信运行时。`);
   }
-  if (html.includes("preview-layout") || html.includes("组件预览")) {
-    throw new Error(`${app.file} 错误包含了本地组件预览壳。`);
-  }
-  if (html.includes("/v1/market/stream")) {
-    throw new Error(`${app.file} 仍包含组件沙箱直连 FQGate WebSocket 的代码。`);
+  if (!html.includes("fqgate-mcp-ui") || !html.includes("transport")) {
+    throw new Error(`${app.file} 没有包含统一 HTTP/MCP 运行时入口。`);
   }
   if (["permissions", "appOnly", "csp", "connectDomains"].some((field) => field in app)) {
     throw new Error(`${app.id} 不能通过远程清单配置权限或网络访问。`);

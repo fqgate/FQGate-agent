@@ -12,19 +12,11 @@ import {
   type FqgateHttpClientOptions,
   toFqgateWebSocketUrl
 } from "./FqgateHttpClient";
-import type {
-  FqgateStandardQuote,
-  FqgateStandardQuoteData
-} from "./FqgateMarketDataParsers";
-import {
-  fqgateStandardSecurityKey,
-  toFqgateStandardSecurity
-} from "./FqgateStandardMarket";
 import { FqgateWebSocketTransport } from "./FqgateWebSocketTransport";
 
 type RawRecord = Record<string, unknown>;
 
-interface FqgateV1MarketData {
+interface FqgateMarketData {
   records?: unknown;
 }
 
@@ -32,7 +24,7 @@ interface FqgateStreamMessage {
   event?: "subscribed" | "unsubscribed" | "data" | "notice" | "pong";
   code?: number;
   message?: string;
-  data?: FqgateV1MarketData;
+  data?: FqgateMarketData;
   resync_required?: boolean;
 }
 
@@ -40,16 +32,7 @@ export interface FqgateMarketQuoteServiceOptions extends FqgateHttpClientOptions
   webSocketFactory?: (url: string) => WebSocket;
 }
 
-const QUOTE_FIELDS = [
-  "security_name",
-  "latest",
-  "previous_close",
-  "open",
-  "high",
-  "low",
-  "volume",
-  "transaction_amount"
-] as const;
+const QUOTE_FIELDS = [5, 55, 10, 6, 7, 8, 9, 13, 19, 48, 49];
 const MAX_TREND_POINTS = 64;
 const TREND_CONCURRENCY = 4;
 
@@ -73,11 +56,11 @@ export class FqgateMarketQuoteSnapshotService {
   ): Promise<MarketQuotePatch[]> {
     const groups = groupByMarket(securities);
     const batches = await Promise.all([...groups.values()].map(async (group) => {
-      const data = await this.client.post<FqgateStandardQuoteData>("/v2/market/quotes", {
-        securities: group.map(toFqgateStandardSecurity),
+      const data = await this.client.post<FqgateMarketData>("/v1/market/realtime/quote", {
+        securities: group.map(({ market, code }) => ({ market, code })),
         fields: QUOTE_FIELDS
       }, signal);
-      return parseStandardQuoteItems(data.items, group);
+      return parseQuoteRecords(data.records, group);
     }));
     return batches.flat();
   }
@@ -94,7 +77,7 @@ export class FqgateMarketQuoteSnapshotService {
         while (!signal?.aborted && nextIndex < securities.length) {
           const security = securities[nextIndex++];
           try {
-            const data = await this.client.post<FqgateV1MarketData>(
+            const data = await this.client.post<FqgateMarketData>(
               "/v1/market/history/intraday",
               { market: security.market, code: security.code },
               signal
@@ -116,7 +99,7 @@ export class FqgateMarketQuoteSnapshotService {
   }
 }
 
-/** 使用 FQGate V2 批量快照和 V1 WebSocket 订阅提供多股实时行情。 */
+/** 使用 FQGate 批量快照和标准 WebSocket 订阅提供多股实时行情。 */
 export class FqgateMarketQuoteService
   extends FqgateMarketQuoteSnapshotService
   implements MarketQuoteService {
@@ -220,7 +203,7 @@ function uniqueSecurities(securities: readonly MarketSecurity[]): MarketSecurity
   return [...new Map(securities.map((item) => [marketSecurityKey(item), { ...item }])).values()];
 }
 
-/** V1 实时推送 records 为“分段 -> 记录 -> 字段”，这里只展开数字字段记录。 */
+/** FQGate records 为“分段 -> 记录 -> 字段”，这里只展开含数字字段的记录。 */
 function collectRecords(value: unknown, target: RawRecord[] = []): RawRecord[] {
   if (Array.isArray(value)) {
     for (const item of value) collectRecords(item, target);
@@ -261,36 +244,6 @@ function parseQuoteRecords(
   return result;
 }
 
-function parseStandardQuoteItems(
-  items: readonly FqgateStandardQuote[],
-  knownSecurities: readonly MarketSecurity[]
-): MarketQuotePatch[] {
-  const byStandardSecurity = new Map(
-    knownSecurities.map((item) => [fqgateStandardSecurityKey(item), item] as const)
-  );
-  const result: MarketQuotePatch[] = [];
-  for (const item of items) {
-    const security = byStandardSecurity.get(`${item.security.market}:${item.security.code}`);
-    if (!security) continue;
-    result.push(compactUndefined({
-      security: {
-        ...security,
-        fullCode: security.fullCode || `${security.market}${security.code}`
-      },
-      name: displayNameValue(item.security_name),
-      latestPrice: directNumber(item.latest),
-      previousClose: directNumber(item.previous_close),
-      openPrice: directNumber(item.open),
-      highPrice: directNumber(item.high),
-      lowPrice: directNumber(item.low),
-      volume: directNumber(item.volume),
-      amount: directNumber(item.transaction_amount),
-      receivedAt: Date.now()
-    }));
-  }
-  return result;
-}
-
 function fieldValue(record: RawRecord, field: string): unknown {
   const raw = record[field];
   if (isRecord(raw)) {
@@ -315,10 +268,6 @@ function numberValue(value: unknown): number | undefined {
   if (typeof value !== "string") return undefined;
   const parsed = Number(value.replaceAll(",", "").trim());
   return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-function directNumber(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 function downsample(values: number[], limit: number): number[] {

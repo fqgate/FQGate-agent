@@ -96,7 +96,9 @@ export class McpAppRuntime {
 
   getOriginatingToolSnapshot(): OriginatingToolSnapshot {
     return {
-      name: this.app.getHostContext()?.toolInfo?.tool.name ?? this.configuredOriginatingToolName,
+      name: this.app.getHostContext()?.toolInfo?.tool.name
+        ?? this.configuredOriginatingToolName
+        ?? readToolNameFromResult(this.latestResult),
       arguments: this.latestArguments,
       result: this.latestResult
     };
@@ -162,6 +164,14 @@ function applyHostContext(context: Partial<McpUiHostContext> | undefined): void 
   if (context?.theme) applyDocumentTheme(context.theme);
   if (context?.styles?.variables) applyHostStyleVariables(context.styles.variables);
   if (context?.styles?.css?.fonts) applyHostFonts(context.styles.css.fonts);
+}
+
+/** 兼容没有暴露 toolInfo 的 AI 宿主，从 FQGate 组件元数据恢复当前工具。 */
+function readToolNameFromResult(result: McpToolResult | undefined): string | undefined {
+  const metadata = result?._meta;
+  if (!isJsonObject(metadata)) return undefined;
+  const toolName = metadata["fqgate/uiTool"];
+  return typeof toolName === "string" && toolName.trim() ? toolName : undefined;
 }
 
 function isJsonObject(value: unknown): value is JsonObject {

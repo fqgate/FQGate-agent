@@ -120,10 +120,10 @@ FQGate 默认只监听当前电脑的本机地址，Agent 不会连接公网或�
 - QQ 群：[免费 AI 量化数据](https://qm.qq.com/q/ZQSuiYQZ4Q)，群号：`14546787`
 - 问题反馈：[GitHub Issues](https://github.com/fqgate/FQGate-agent/issues)
 
-微信群二维码会定期失效；如果下方二维码无法使用，请先加入 QQ 群或提交 Issue 提醒维护者更新。
+微信群二维码会定期失效；当前二维码标注为 2026 年 9 月 30 日前有效。如果下方二维码无法使用，请先加入 QQ 群或提交 Issue 提醒维护者更新。
 
 <p align="center">
-  <img src="./assets/community/wechat-agent-group-qr.png" alt="FQGate Agent 微信交流群二维码" width="280">
+  <img src="./assets/community/wechat-agent-group-qr.png" alt="同花顺 AI Agent 插件交流群二维码，有效期至 2026 年 9 月 30 日" width="320">
 </p>
 
 ## 支持项目
@@ -136,7 +136,31 @@ FQGate 默认只监听当前电脑的本机地址，Agent 不会连接公网或�
 
 如果 FQGate 和开源 Agent 项目对你有帮助，欢迎自愿赞赏支持。赞赏不会解锁任何功能、数据权限、投资建议、问题处理优先级或后续服务承诺。
 
-赞赏者：<img src="./assets/sponsors/feng-kevin.jpg" alt="峰-Kevin" width="32" height="32"> **峰-Kevin** · <img src="./assets/sponsors/adong.jpg" alt="阿东" width="32" height="32"> **阿东** · <img src="./assets/sponsors/xingguang.jpg" alt="星光" width="32" height="32"> **星光** · <img src="./assets/sponsors/xu.jpg" alt="許" width="32" height="32"> **許** · <img src="./assets/sponsors/xuhao.jpg" alt="序号" width="32" height="32"> **序号** · <img src="./assets/sponsors/ice.jpg" alt="ICE" width="32" height="32"> **ICE** · <img src="./assets/sponsors/u_u.jpg" alt="U_U" width="32" height="32"> **U_U** · <img src="./assets/sponsors/wd.jpg" alt="wd" width="32" height="32"> **wd** · <img src="./assets/sponsors/betterme.png" alt="@BetterMe（借钱勿扰）" width="32" height="32"> **@BetterMe（借钱勿扰）**
+| 头像 | 昵称 | 渠道 | 金额 | 日期 |
+| --- | --- | --- | --- | --- |
+| <img src="./assets/sponsors/feng-kevin.jpg" alt="峰-Kevin" width="40" height="40"> | 峰-Kevin | 微信 |20  | 2026-8-25 |
+| <img src="./assets/sponsors/adong.jpg" alt="阿东" width="40" height="40"> | 阿东 | 微信 |500 |2026-8-27 |
+| <img src="./assets/sponsors/xingguang.jpg" alt="星光" width="40" height="40"> | 星光 |微信 |88.88 |2026-8-27 |
+| <img src="./assets/sponsors/xu.jpg" alt="許" width="40" height="40"> | 許 |微信 |100 |2026-9-1 |
+| <img src="./assets/sponsors/ice.jpg" alt="ICE" width="40" height="40"> | ICE | 微信 | 8.88 | 2026-9-7 |
+| <img src="./assets/sponsors/xuhao.jpg" alt="序号" width="40" height="40"> | 序号 | 微信 | 8.8 | 2026-9-6 |
+| <img src="./assets/sponsors/u_u.jpg" alt="U_U" width="40" height="40"> | U_U | 微信 | 188 | 2026-9-7 |
+| <img src="./assets/sponsors/adong.jpg" alt="阿东" width="40" height="40"> | 阿东 | 微信 |100 |2026-9-9 |
+| <img src="./assets/sponsors/wd.jpg" alt="wd" width="40" height="40"> | wd |微信| 100 | 1016-9-9 |
+| <img src="./assets/sponsors/feng-kevin.jpg" alt="峰-Kevin" width="40" height="40"> | 峰-Kevin | 微信 |50  | 2026-9-9 |
+| <img src="./assets/sponsors/betterme.png" alt="@BetterMe（借钱勿扰）" width="40" height="40"> | @BetterMe（借钱勿扰） | 微信 | 66 | 2026-9-10 |
+| <img src="./assets/sponsors/qiaonan.jpg" alt="桥南" width="40" height="40"> | 桥南 | 微信| 50 | 2026-9-11|
+| <img src="./assets/sponsors/minus45-earth.jpg" alt="-45°俯视大地" width="40" height="40"> | -45°俯视大地 | 微信 | 5 | 2026-9-12|
+| <img src="./assets/sponsors/avatar-placeholder.svg" alt="**平" width="40" height="40"> | **平 | 支付宝 | 50 | 2026-9-14|
+| <img src="./assets/sponsors/xiaolong.jpg" alt="小龙" width="40" height="40"> | 小龙 | 微信 | 88 | 2026-9-19|
+| <img src="./assets/sponsors/avatar-placeholder.svg" alt="康诚传媒" width="40" height="40"> | 康诚传媒 | 微信 | 5 | 2026-9-23|
+| <img src="./assets/sponsors/avatar-placeholder.svg" alt="草木皆兵" width="40" height="40"> | 草木皆兵 | 微信 | 5 | 2026-9-24|
+| <img src="./assets/sponsors/avatar-placeholder.svg" alt="**进" width="40" height="40"> | **进 | 支付宝| 10 | 2026-9-24 |
+
+
+
+
+
 
 ## 开源与许可
 

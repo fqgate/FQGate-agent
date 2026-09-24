@@ -3,6 +3,8 @@ import { McpAppRuntime } from "./McpAppRuntime";
 
 const FQGATE_MCP_ROUTES = {
   "GET /v1/market/health": "fqgate_market_market_health",
+  "DELETE /v1/market/session": "fqgate_market_logout",
+  "POST /v1/market/session/cached-login": "fqgate_market_cached_login",
   "POST /v1/market/session/qr/begin": "fqgate_market_qr_login_begin",
   "POST /v1/market/session/qr/poll": "fqgate_market_qr_login_poll",
   "POST /v1/market/session/sms/begin": "fqgate_market_sms_login_begin",
@@ -11,14 +13,14 @@ const FQGATE_MCP_ROUTES = {
   "POST /v1/market/history/klines": "fqgate_market_klines",
   "POST /v1/market/history/intraday": "fqgate_market_intraday",
   "POST /v1/market/history/minute-snapshot": "fqgate_market_minute_snapshot",
+  "POST /v1/market/history/depth": "fqgate_market_depth",
   "POST /v1/market/history/tick": "fqgate_market_tick",
+  "POST /v1/market/level2/depth": "fqgate_market_level2_depth",
   "POST /v1/market/level2/transactions": "fqgate_market_level2_transactions",
   "POST /v1/market/level2/orders": "fqgate_market_level2_orders",
   "POST /v1/market/level2/cancellations/buy": "fqgate_market_level2_buy_cancellations",
   "POST /v1/market/level2/cancellations/sell": "fqgate_market_level2_sell_cancellations",
-  "POST /v2/market/quotes": "fqgate_quote_snapshot",
-  "POST /v2/market/order-books/five-level": "fqgate_depth_five",
-  "POST /v2/market/level2/order-books/ten-level": "fqgate_level2_depth_ten",
+  "POST /v1/market/realtime/quote": "fqgate_market_quote",
   "POST /v1/market/realtime/cn": "fqgate_market_market_data_cn",
   "POST /v1/market/information/news": "fqgate_market_news",
   "POST /v1/market/catalog/search-symbols": "fqgate_market_search_symbols"

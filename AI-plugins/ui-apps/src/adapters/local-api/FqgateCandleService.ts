@@ -11,10 +11,9 @@ import type {
 import { klineIntervalLabel } from "@/shared/kline";
 import { FqgateHttpClient, type FqgateHttpClientOptions } from "./FqgateHttpClient";
 import {
-  parseStandardRealtimeQuote,
-  type FqgateStandardQuoteData
+  parseRealtimeQuote,
+  type FqgateMarketDataPayload
 } from "./FqgateMarketDataParsers";
-import { toFqgateStandardSecurity } from "./FqgateStandardMarket";
 
 type RawRecord = Record<string, unknown>;
 
@@ -90,24 +89,16 @@ export class FqgateCandleService implements CandleService {
    */
   private async getQuoteSnapshot(security: MarketSecurity): Promise<MarketRealtimeQuote | undefined> {
     try {
-      const data = await this.client.post<FqgateStandardQuoteData>(
-        "/v2/market/quotes",
+      const data = await this.client.post<FqgateMarketDataPayload>(
+        "/v1/market/realtime/quote",
         {
-          securities: [toFqgateStandardSecurity(security)],
-          fields: [
-            "previous_close",
-            "open",
-            "high",
-            "low",
-            "latest",
-            "volume",
-            "transaction_amount"
-          ]
+          securities: [{ market: security.market, code: security.code }],
+          fields: [5, 6, 7, 8, 9, 10, 13, 19, 1968584]
         },
         undefined,
         3_000
       );
-      return parseStandardRealtimeQuote(data);
+      return parseRealtimeQuote(data);
     } catch {
       // 实时快照是附加数据，不因它暂时不可用而阻断整张图表。
     }

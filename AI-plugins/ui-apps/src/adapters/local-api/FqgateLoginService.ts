@@ -1,5 +1,7 @@
 import type {
   LoginResult,
+  LoginState,
+  LoginStateMethod,
   LoginService,
   QrLoginProgress,
   QrLoginSession,
@@ -14,7 +16,18 @@ import {
 
 interface FqgateLoginResult {
   connected: boolean;
-  login_method: "qr" | "sms";
+  login_method: LoginStateMethod;
+}
+
+interface FqgateHealthData {
+  connected?: boolean;
+  account?: string | null;
+  user_id?: string | null;
+  login_method?: LoginStateMethod | null;
+}
+
+interface FqgateLogoutData {
+  connected?: boolean;
 }
 
 interface FqgateQrSession {
@@ -64,6 +77,28 @@ export class FqgateLoginService implements LoginService {
 
   get connection() {
     return this.client.connection;
+  }
+
+  async getLoginState(): Promise<LoginState> {
+    const result = await this.client.get<FqgateHealthData>("/v1/market/health");
+    return {
+      connected: result.connected === true,
+      account: result.account ?? undefined,
+      userId: result.user_id ?? undefined,
+      method: result.login_method ?? undefined
+    };
+  }
+
+  async logout(): Promise<void> {
+    await this.client.delete<FqgateLogoutData>("/v1/market/session");
+  }
+
+  async cachedLogin(clientPath: string): Promise<LoginResult> {
+    const result = await this.client.post<FqgateLoginResult>(
+      "/v1/market/session/cached-login",
+      { client_path: clientPath }
+    );
+    return toLoginResult(result);
   }
 
   async beginQrLogin(): Promise<QrLoginSession> {

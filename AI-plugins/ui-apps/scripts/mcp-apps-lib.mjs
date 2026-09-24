@@ -23,6 +23,7 @@ export const defaultReleaseOutput = resolve(projectDirectory, "..", "..", "fqgat
 
 const configKeys = ["schemaVersion", "component", "bundleVersion", "minimumFqgateVersion", "apps"];
 const appKeys = ["id", "resourceUri", "file", "title", "description", "toolPaths"];
+const sharedBuildFile = "index.html";
 const versionPattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const idPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const maximumAppSize = 16 * 1024 * 1024;
@@ -44,7 +45,6 @@ export async function loadAppConfig() {
   if (!Array.isArray(config.apps) || config.apps.length === 0) throw new Error("MCP Apps 配置不能为空。");
 
   const ids = new Set();
-  const files = new Set();
   const uris = new Set();
   const boundPaths = new Set();
   for (const app of config.apps) {
@@ -52,13 +52,11 @@ export async function loadAppConfig() {
     if (typeof app.id !== "string" || !idPattern.test(app.id)) throw new Error(`应用 id 无效：${app.id}`);
     if (ids.has(app.id)) throw new Error(`应用 id 重复：${app.id}`);
     ids.add(app.id);
-    if (typeof app.file !== "string" || app.file !== `${app.id}.html`) {
-      throw new Error(`应用 ${app.id} 的 file 必须是 ${app.id}.html。`);
+    if (typeof app.file !== "string" || app.file !== sharedBuildFile) {
+      throw new Error(`应用 ${app.id} 必须共享唯一构建文件 ${sharedBuildFile}。`);
     }
-    if (files.has(app.file)) throw new Error(`应用文件重复：${app.file}`);
-    files.add(app.file);
-    if (typeof app.resourceUri !== "string" || app.resourceUri !== `ui://fqgate/${app.file}`) {
-      throw new Error(`应用 ${app.id} 的 resourceUri 与 file 不一致。`);
+    if (typeof app.resourceUri !== "string" || app.resourceUri !== `ui://fqgate/${app.id}.html`) {
+      throw new Error(`应用 ${app.id} 的 resourceUri 必须使用自己的逻辑页面地址。`);
     }
     if (uris.has(app.resourceUri)) throw new Error(`应用资源地址重复：${app.resourceUri}`);
     uris.add(app.resourceUri);
@@ -88,7 +86,7 @@ export async function buildMcpApps({ channel = "dev", outputDirectory = defaultB
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
   try {
-    for (const app of config.apps) await buildEntry(app, temporaryDirectory, output);
+    await buildSharedEntry(temporaryDirectory, output);
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }
@@ -276,20 +274,23 @@ function validateGeneratedManifest(manifest, expectedChannel) {
   }
   if (!Array.isArray(manifest.apps) || manifest.apps.length === 0) throw new Error("生成清单没有应用。");
   const ids = new Set();
-  const files = new Set();
+  let sharedFile;
+  let sharedSize;
+  let sharedSha256;
   const uris = new Set();
   const boundPaths = new Set();
   let bundleSize = 0;
   for (const app of manifest.apps) {
     assertExactKeys(app, [...appKeys, "size", "sha256"], `生成应用 ${app?.id ?? "<unknown>"}`);
-    if (!idPattern.test(app.id) || app.file !== `${app.id}.html` || app.resourceUri !== `ui://fqgate/${app.file}`) {
+    if (!idPattern.test(app.id) || app.file !== sharedBuildFile || app.resourceUri !== `ui://fqgate/${app.id}.html`) {
       throw new Error(`生成应用 ${app.id} 的标识、文件名或资源地址无效。`);
     }
-    if (ids.has(app.id) || files.has(app.file) || uris.has(app.resourceUri)) {
+    if (ids.has(app.id) || uris.has(app.resourceUri)) {
       throw new Error(`生成应用 ${app.id} 与其他应用重复。`);
     }
     ids.add(app.id);
-    files.add(app.file);
+    if (sharedFile && sharedFile !== app.file) throw new Error("生成清单必须只引用一个共享构建文件。");
+    sharedFile = app.file;
     uris.add(app.resourceUri);
     if (!isNonEmptyString(app.title) || app.title.length > 128 || !isNonEmptyString(app.description) || app.description.length > 512) {
       throw new Error(`生成应用 ${app.id} 缺少标题或说明。`);
@@ -304,13 +305,18 @@ function validateGeneratedManifest(manifest, expectedChannel) {
     if (!Number.isSafeInteger(app.size) || app.size <= 0 || app.size > maximumAppSize || !/^[a-f0-9]{64}$/.test(app.sha256)) {
       throw new Error(`生成应用 ${app.id} 的文件校验信息无效。`);
     }
-    bundleSize += app.size;
+    if (sharedSize !== undefined && (sharedSize !== app.size || sharedSha256 !== app.sha256)) {
+      throw new Error("生成清单中共享构建文件的校验信息不一致。");
+    }
+    sharedSize ??= app.size;
+    sharedSha256 ??= app.sha256;
+    if (ids.size === 1) bundleSize = app.size;
   }
   if (bundleSize > maximumBundleSize) throw new Error("MCP Apps 总大小超过 64 MiB。 ");
 }
 
-async function buildEntry(app, temporaryDirectory, outputDirectory) {
-  const entryDirectory = resolve(temporaryDirectory, app.id);
+async function buildSharedEntry(temporaryDirectory, outputDirectory) {
+  const entryDirectory = resolve(temporaryDirectory, "universal");
   await build({
     configFile: resolve(projectDirectory, "vite.mcp-apps.config.ts"),
     root: projectDirectory,
@@ -323,7 +329,7 @@ async function buildEntry(app, temporaryDirectory, outputDirectory) {
       modulePreload: false,
       outDir: entryDirectory,
       rollupOptions: {
-        input: resolve(projectDirectory, "mcp-apps", app.file),
+        input: resolve(projectDirectory, "index.html"),
         output: {
           inlineDynamicImports: true,
           entryFileNames: "assets/app.js",
@@ -333,9 +339,9 @@ async function buildEntry(app, temporaryDirectory, outputDirectory) {
     }
   });
 
-  const htmlPath = await findFile(entryDirectory, app.file);
+  const htmlPath = await findFile(entryDirectory, sharedBuildFile);
   const html = await inlineBuildAssets(htmlPath);
-  await writeFile(resolve(outputDirectory, app.file), html, "utf8");
+  await writeFile(resolve(outputDirectory, sharedBuildFile), html, "utf8");
 }
 
 async function inlineBuildAssets(htmlPath) {

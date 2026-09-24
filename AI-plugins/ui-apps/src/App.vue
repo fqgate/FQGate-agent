@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from "vue";
 
 import {
   FqgateCandleService,
@@ -25,9 +25,18 @@ const OrderFlowWatchPanel = defineAsyncComponent(
   () => import("@/components/order-flow/OrderFlowWatchPanel.vue")
 );
 
-const selectedKey = ref(new URLSearchParams(window.location.search).get("component") || "market-quotes");
+const componentTitles = {
+  login: "登录",
+  candle: "个股行情",
+  information: "资讯",
+  "market-quotes": "多股行情",
+  "order-flow": "L2 - 逐笔委托"
+} as const;
+type ComponentKey = keyof typeof componentTitles;
+
+const selectedKey = ref<ComponentKey>(readComponentKey());
 const previewInitialCandleInterval = readPreviewCandleInterval();
-const visitedKeys = ref(new Set([selectedKey.value]));
+const visitedKeys = ref(new Set<ComponentKey>([selectedKey.value]));
 const loginService = new FqgateLoginService();
 const candleService = new FqgateCandleService();
 const securityService = new FqgateSecuritySearchService();
@@ -41,13 +50,6 @@ const previewSecurity = {
   code: "600151",
   fullCode: "USHA600151",
   name: "航天机电"
-};
-const componentTitles: Record<string, string> = {
-  login: "登录",
-  candle: "个股行情",
-  information: "资讯",
-  "market-quotes": "多股行情",
-  "order-flow": "L2 - 逐笔委托"
 };
 const componentTitle = computed(() => componentTitles[selectedKey.value] ?? "");
 
@@ -63,6 +65,26 @@ const previewSecurities: MarketSecurity[] = [
 ];
 
 function selectComponent(key: string): void {
+  if (!isComponentKey(key)) return;
+  selectedKey.value = key;
+  if (!visitedKeys.value.has(key)) visitedKeys.value = new Set([...visitedKeys.value, key]);
+  if (window.location.hash !== `#${key}`) window.location.hash = key;
+}
+
+function readComponentKey(): ComponentKey {
+  const hashKey = decodeURIComponent(window.location.hash.replace(/^#/, "")).trim();
+  const queryKey = new URLSearchParams(window.location.search).get("component")?.trim() ?? "";
+  const candidate = hashKey || queryKey;
+  return isComponentKey(candidate) ? candidate : "market-quotes";
+}
+
+function isComponentKey(value: string): value is ComponentKey {
+  return Object.prototype.hasOwnProperty.call(componentTitles, value);
+}
+
+function syncComponentFromHash(): void {
+  const key = readComponentKey();
+  if (key === selectedKey.value) return;
   selectedKey.value = key;
   if (!visitedKeys.value.has(key)) visitedKeys.value = new Set([...visitedKeys.value, key]);
 }
@@ -74,6 +96,9 @@ function readPreviewCandleInterval(): KlineInterval | undefined {
   ];
   return intervals.includes(value as KlineInterval) ? value as KlineInterval : undefined;
 }
+
+onMounted(() => window.addEventListener("hashchange", syncComponentFromHash));
+onBeforeUnmount(() => window.removeEventListener("hashchange", syncComponentFromHash));
 </script>
 
 <template>

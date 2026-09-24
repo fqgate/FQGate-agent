@@ -20,7 +20,7 @@ on:
       minimum_fqgate_version:
         description: 最低支持的 FQGate 版本
         required: true
-        default: 0.1.0
+        default: 1.0.3
         type: string
   push:
     tags:
@@ -81,7 +81,7 @@ jobs:
           fi
       - name: 更新 MCP Apps 版本
         env:
-          MINIMUM_FQGATE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.minimum_fqgate_version || '0.1.0' }}
+          MINIMUM_FQGATE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.minimum_fqgate_version || '1.0.3' }}
         run: >-
           node AI-plugins/ui-apps/scripts/prepare-mcp-apps-version.mjs
           --version "${{ steps.version.outputs.version }}"

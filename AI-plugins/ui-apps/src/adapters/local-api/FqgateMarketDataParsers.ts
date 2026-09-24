@@ -18,38 +18,6 @@ export interface FqgateMarketDataPayload {
   }>;
 }
 
-export interface FqgateStandardQuoteData {
-  items: FqgateStandardQuote[];
-}
-
-export interface FqgateStandardOrderBookData {
-  items: FqgateStandardOrderBook[];
-}
-
-export interface FqgateStandardQuote {
-  security: {
-    market: string;
-    code: string;
-  };
-  security_name?: string;
-  previous_close?: number;
-  open?: number;
-  high?: number;
-  low?: number;
-  latest?: number;
-  volume?: number;
-  transaction_amount?: number;
-}
-
-interface FqgateStandardOrderBook {
-  security: {
-    market: string;
-    code: string;
-  };
-  bids: FqgateDepthLevel[];
-  asks: FqgateDepthLevel[];
-}
-
 interface FqgateDepthLevel {
   level?: number;
   price?: number | null;
@@ -65,43 +33,6 @@ const BASIC_ASK_FIELDS: ReadonlyArray<readonly [string, string]> = [
 
 export const MARKET_TRANSACTION_LIMIT = 500;
 
-export function parseStandardOrderBook(
-  data: FqgateStandardOrderBookData,
-  levelCount: 5 | 10
-): {
-  bids: MarketDepthLevel[];
-  asks: MarketDepthLevel[];
-} {
-  const snapshot = data.items[0];
-  return {
-    bids: normalizeStandardDepthLevels(snapshot?.bids, levelCount),
-    asks: normalizeStandardDepthLevels(snapshot?.asks, levelCount)
-  };
-}
-
-export function parseStandardRealtimeQuote(
-  data: FqgateStandardQuoteData
-): MarketRealtimeQuote | undefined {
-  const quote = data.items[0];
-  if (!quote) return undefined;
-  const latestPrice = semanticNumber(quote.latest);
-  const volume = semanticNumber(quote.volume);
-  const amount = semanticNumber(quote.transaction_amount);
-  if (latestPrice === null && volume === null && amount === null) return undefined;
-  return {
-    updatedAt: Date.now(),
-    latestPrice,
-    previousClose: semanticNumber(quote.previous_close),
-    open: semanticNumber(quote.open),
-    high: semanticNumber(quote.high),
-    low: semanticNumber(quote.low),
-    volume,
-    amount,
-    turnoverRate: null
-  };
-}
-
-/** V1 Level-2 实时推送仍使用 depth 包装；仅供尚未标准化的实时链路。 */
 export function parseLevel2Depth(data: FqgateMarketDataPayload): {
   bids: MarketDepthLevel[];
   asks: MarketDepthLevel[];
@@ -113,7 +44,6 @@ export function parseLevel2Depth(data: FqgateMarketDataPayload): {
   };
 }
 
-/** V1 普通实时推送仍使用五档数字字段；仅供尚未标准化的实时链路。 */
 export function parseBasicDepth(data: FqgateMarketDataPayload): {
   bids: MarketDepthLevel[];
   asks: MarketDepthLevel[];
@@ -174,7 +104,6 @@ export function parseLevel2Transactions(data: FqgateMarketDataPayload): MarketTr
     .slice(0, MARKET_TRANSACTION_LIMIT);
 }
 
-/** V1 Quote 实时推送解析；V2 快照必须使用 parseStandardRealtimeQuote。 */
 export function parseRealtimeQuote(data: FqgateMarketDataPayload): MarketRealtimeQuote | undefined {
   const record = firstRawRecord(data.records);
   if (!record) return undefined;
@@ -207,26 +136,6 @@ export function parseRealtimePoints(data: FqgateMarketDataPayload): MarketRealti
       amount: fieldNumber(record, "19")
     }];
   }).sort((left, right) => left.timestamp - right.timestamp);
-}
-
-function normalizeStandardDepthLevels(
-  levels: FqgateDepthLevel[] | undefined,
-  levelCount: 5 | 10
-): MarketDepthLevel[] {
-  const byLevel = new Map(
-    (levels ?? [])
-      .filter((item) => Number.isInteger(item.level) && item.level! >= 1 && item.level! <= levelCount)
-      .map((item) => [item.level!, item])
-  );
-  return Array.from({ length: levelCount }, (_, index) => {
-    const level = index + 1;
-    const item = byLevel.get(level);
-    return {
-      level,
-      price: semanticNumber(item?.price),
-      volume: semanticNumber(item?.volume)
-    };
-  });
 }
 
 function normalizeDepthLevels(levels: FqgateDepthLevel[] | undefined): MarketDepthLevel[] {
@@ -291,10 +200,6 @@ function finiteNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const number = typeof value === "number" ? value : Number(value);
   return Number.isFinite(number) ? number : null;
-}
-
-function semanticNumber(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function strictTimestamp(value: number | null): number | null {

@@ -81,6 +81,10 @@ export class FqgateHttpClient {
     }, signal);
   }
 
+  async delete<T>(path: string, signal?: AbortSignal): Promise<T> {
+    return this.request<T>(path, { method: "DELETE" }, signal);
+  }
+
   private async request<T>(path: string, init: RequestInit, signal?: AbortSignal): Promise<T> {
     if (this.connection.getSnapshot().state === "reconnecting") {
       throw new DataServiceUnavailableError("数据服务正在重连，请稍候。");

@@ -11,11 +11,19 @@ export interface AiToolAdapter {
 }
 
 export type LoginMethod = "qr" | "sms";
+export type LoginStateMethod = LoginMethod | "guest" | "password" | "cached" | "formal";
 export type QrLoginStatus = "waiting_for_scan" | "waiting_for_confirmation";
 
 export interface LoginResult {
   connected: true;
-  method: LoginMethod;
+  method: LoginStateMethod;
+}
+
+export interface LoginState {
+  connected: boolean;
+  account?: string;
+  userId?: string;
+  method?: LoginStateMethod;
 }
 
 export interface QrLoginSession {
@@ -46,6 +54,9 @@ export interface SmsLoginSession {
 }
 
 export interface LoginService extends UiDataSource {
+  getLoginState(): Promise<LoginState>;
+  logout(): Promise<void>;
+  cachedLogin(clientPath: string): Promise<LoginResult>;
   beginQrLogin(): Promise<QrLoginSession>;
   pollQrLogin(flowId: number): Promise<QrLoginProgress>;
   beginSmsLogin(phoneNumber: string): Promise<SmsLoginSession>;
