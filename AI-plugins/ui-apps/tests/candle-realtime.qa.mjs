@@ -18,7 +18,6 @@ try {
       diagnostics.push(`console: ${message.text()}`);
     }
   });
-
   await installRealtimeSocket(page);
   await routeSnapshots(page);
   await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
@@ -78,6 +77,9 @@ try {
 }
 
 async function routeSnapshots(page) {
+  await page.route("**/v1/market/information/news", (route) => route.fulfill(apiResponse({
+    records: []
+  })));
   await page.route("**/v1/market/health", (route) => route.fulfill(apiResponse({
     connected: true,
     network_ready: true,
@@ -91,22 +93,21 @@ async function routeSnapshots(page) {
       "13": field(20_000), "19": field(201_600)
     }]]
   })));
-  await page.route("**/v1/market/realtime/quote", (route) => route.fulfill(apiResponse({
-    records: [[{
-      "5": field("USHA600151"),
-      "6": field(10),
-      "7": field(10.02),
-      "8": field(10.12),
-      "9": field(9.98),
-      "10": field(10.08),
-      "13": field(20_000),
-      "19": field(201_600),
-      "1968584": field(2.28)
-    }]]
+  await page.route("**/v2/market/quotes", (route) => route.fulfill(apiResponse({
+    items: [{
+      security: { market: "XSHG", code: "600151" },
+      previous_close: 10,
+      open: 10.02,
+      high: 10.12,
+      low: 9.98,
+      latest: 10.08,
+      volume: 20_000,
+      transaction_amount: 201_600
+    }]
   })));
-  await page.route("**/v1/market/level2/depth", (route) => route.fulfill(apiResponse({
-    depth: [{
-      security: "USHA600151",
+  await page.route("**/v2/market/level2/order-books/ten-level", (route) => route.fulfill(apiResponse({
+    items: [{
+      security: { market: "XSHG", code: "600151" },
       bids: depthLevels(10.07, -0.01, 1_000),
       asks: depthLevels(10.09, 0.01, 1_100)
     }]

@@ -13,7 +13,13 @@ import {
   toFqgateWebSocketUrl,
   type FqgateHttpClientOptions
 } from "./FqgateHttpClient";
-import { parseOrderFlowQuote, parseOrderFlowRecords } from "./FqgateOrderFlowParsers";
+import type { FqgateStandardQuoteData } from "./FqgateMarketDataParsers";
+import {
+  parseOrderFlowQuote,
+  parseOrderFlowRecords,
+  parseStandardOrderFlowQuote
+} from "./FqgateOrderFlowParsers";
+import { toFqgateStandardSecurity } from "./FqgateStandardMarket";
 import { FqgateWebSocketTransport } from "./FqgateWebSocketTransport";
 
 interface FqgateMarketHealth {
@@ -101,11 +107,11 @@ export class FqgateOrderFlowService implements OrderFlowWatchService {
     signal?: AbortSignal
   ): Promise<void> {
     try {
-      const data = await this.client.post<unknown>("/v1/market/realtime/quote", {
-        securities: [{ market: security.market, code: security.code }],
-        fields: [5, 55, 10, 6]
+      const data = await this.client.post<FqgateStandardQuoteData>("/v2/market/quotes", {
+        securities: [toFqgateStandardSecurity(security)],
+        fields: ["latest", "previous_close"]
       }, signal);
-      const quote = parseOrderFlowQuote(data);
+      const quote = parseStandardOrderFlowQuote(data);
       if (quote && !signal?.aborted) listener.onQuote(quote);
     } catch {
       // WebSocket 仍是主数据通道；快照失败时继续等待下一次实时推送。

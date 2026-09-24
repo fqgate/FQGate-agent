@@ -3,11 +3,13 @@ import {
   FqgateHttpClient,
   type FqgateHttpClientOptions
 } from "@/adapters/local-api/FqgateHttpClient";
+import type { FqgateStandardQuoteData } from "@/adapters/local-api/FqgateMarketDataParsers";
 import {
-  parseOrderFlowQuote,
-  parseOrderFlowRecords
+  parseOrderFlowRecords,
+  parseStandardOrderFlowQuote
 } from "@/adapters/local-api/FqgateOrderFlowParsers";
 import { searchFqgateSecurities } from "@/adapters/local-api/FqgateSecuritySearchService";
+import { toFqgateStandardSecurity } from "@/adapters/local-api/FqgateStandardMarket";
 import type {
   MarketSecurity,
   OrderFlowDataMode,
@@ -81,11 +83,11 @@ export class McpPollingOrderFlowService implements OrderFlowWatchService {
           });
         }
 
-        const quoteData = await this.client.post<unknown>("/v1/market/realtime/quote", {
-          securities: [{ market: security.market, code: security.code }],
-          fields: [5, 55, 10, 6]
+        const quoteData = await this.client.post<FqgateStandardQuoteData>("/v2/market/quotes", {
+          securities: [toFqgateStandardSecurity(security)],
+          fields: ["latest", "previous_close"]
         }, pollSignal);
-        const quote = parseOrderFlowQuote(quoteData);
+        const quote = parseStandardOrderFlowQuote(quoteData);
         if (quote) listener.onQuote(quote);
 
         if (mode === "level2") {

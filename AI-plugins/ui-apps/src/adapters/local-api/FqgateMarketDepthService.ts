@@ -14,12 +14,13 @@ import {
 } from "./FqgateHttpClient";
 import {
   MARKET_TRANSACTION_LIMIT,
-  parseBasicDepth,
   parseBasicTransactions,
-  parseLevel2Depth,
   parseLevel2Transactions,
-  type FqgateMarketDataPayload
+  parseStandardOrderBook,
+  type FqgateMarketDataPayload,
+  type FqgateStandardOrderBookData
 } from "./FqgateMarketDataParsers";
+import { toFqgateStandardSecurity } from "./FqgateStandardMarket";
 
 interface FqgateMarketHealth {
   connected: boolean;
@@ -86,9 +87,9 @@ export class FqgateMarketDepthService implements MarketDepthService {
     signal?: AbortSignal
   ): Promise<LoadedMarketDetails> {
     const [depthData, transactionData] = await Promise.all([
-      this.client.post<FqgateMarketDataPayload>(
-        "/v1/market/level2/depth",
-        { securities: [securityRequest(security)] },
+      this.client.post<FqgateStandardOrderBookData>(
+        "/v2/market/level2/order-books/ten-level",
+        { securities: [toFqgateStandardSecurity(security)] },
         signal,
         30_000
       ),
@@ -106,7 +107,7 @@ export class FqgateMarketDepthService implements MarketDepthService {
         30_000
       )
     ]);
-    const depth = parseLevel2Depth(depthData);
+    const depth = parseStandardOrderBook(depthData, 10);
     return {
       ...depth,
       transactions: parseLevel2Transactions(transactionData)
@@ -118,9 +119,9 @@ export class FqgateMarketDepthService implements MarketDepthService {
     signal?: AbortSignal
   ): Promise<LoadedMarketDetails> {
     const [depthData, transactionData] = await Promise.all([
-      this.client.post<FqgateMarketDataPayload>(
-        "/v1/market/history/depth",
-        { securities: [securityRequest(security)] },
+      this.client.post<FqgateStandardOrderBookData>(
+        "/v2/market/order-books/five-level",
+        { securities: [toFqgateStandardSecurity(security)] },
         signal,
         30_000
       ),
@@ -132,7 +133,7 @@ export class FqgateMarketDepthService implements MarketDepthService {
       )
     ]);
     return {
-      ...parseBasicDepth(depthData),
+      ...parseStandardOrderBook(depthData, 5),
       transactions: parseBasicTransactions(transactionData)
     };
   }

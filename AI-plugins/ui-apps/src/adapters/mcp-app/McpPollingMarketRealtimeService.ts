@@ -5,9 +5,11 @@ import {
 import { FqgateMarketDepthService } from "@/adapters/local-api/FqgateMarketDepthService";
 import {
   parseRealtimePoints,
-  parseRealtimeQuote,
-  type FqgateMarketDataPayload
+  parseStandardRealtimeQuote,
+  type FqgateMarketDataPayload,
+  type FqgateStandardQuoteData
 } from "@/adapters/local-api/FqgateMarketDataParsers";
+import { toFqgateStandardSecurity } from "@/adapters/local-api/FqgateStandardMarket";
 import type {
   MarketDepthFallbackReason,
   MarketDepthMode,
@@ -79,15 +81,23 @@ export class McpPollingMarketRealtimeService implements MarketRealtimeService {
           }
         }
 
-        const quoteData = await this.client.post<FqgateMarketDataPayload>(
-          "/v1/market/realtime/quote",
+        const quoteData = await this.client.post<FqgateStandardQuoteData>(
+          "/v2/market/quotes",
           {
-            securities: [{ market: security.market, code: security.code }],
-            fields: [5, 6, 7, 8, 9, 10, 13, 19, 1968584]
+            securities: [toFqgateStandardSecurity(security)],
+            fields: [
+              "previous_close",
+              "open",
+              "high",
+              "low",
+              "latest",
+              "volume",
+              "transaction_amount"
+            ]
           },
           pollSignal
         );
-        const quote = parseRealtimeQuote(quoteData);
+        const quote = parseStandardRealtimeQuote(quoteData);
         if (quote) listener.onQuote(quote);
 
         if (refreshDetails) {

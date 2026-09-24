@@ -4,10 +4,27 @@ import type {
   OrderFlowRecordKind,
   OrderFlowSide
 } from "@/shared/contracts";
+import type { FqgateStandardQuoteData } from "./FqgateMarketDataParsers";
 
 type JsonObject = Record<string, unknown>;
 export type OrderFlowDetailKind = "order_detail" | "buy_cancel" | "sell_cancel";
 
+export function parseStandardOrderFlowQuote(
+  data: FqgateStandardQuoteData
+): OrderFlowQuote | undefined {
+  const quote = data.items[0];
+  if (!quote) return undefined;
+  const latestPrice = directNumber(quote.latest);
+  const previousClose = directNumber(quote.previous_close);
+  if (latestPrice === null && previousClose === null) return undefined;
+  return {
+    latestPrice,
+    previousClose,
+    updatedAt: Date.now()
+  };
+}
+
+/** V1 实时推送仍返回数字字段记录；统一实时连接标准化前保留此解析器。 */
 export function parseOrderFlowQuote(data: unknown): OrderFlowQuote | undefined {
   const record = firstRawRecord(data);
   if (!record) return undefined;
@@ -89,6 +106,10 @@ function fieldValueNumber(value: unknown): number | null {
   if (payload === null) return null;
   const number = typeof payload === "number" ? payload : Number(payload);
   return Number.isFinite(number) ? number : null;
+}
+
+function directNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function derivedTimestamp(derived: JsonObject): number | null {
