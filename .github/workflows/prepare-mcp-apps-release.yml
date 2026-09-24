@@ -79,9 +79,16 @@ jobs:
             echo "::error::发布标签 $RELEASE_TAG 与计算出的 MCP Apps 版本 $RELEASE_VERSION 不一致，应为 $expected_tag"
             exit 1
           fi
+      - name: 读取当前最低 FQGate 版本
+        id: minimum-fqgate
+        if: github.event_name == 'push'
+        run: |
+          minimum_version="$(node -e "const fs=require('node:fs'); const config=JSON.parse(fs.readFileSync('AI-plugins/ui-apps/mcp-apps/apps.json','utf8')); process.stdout.write(config.minimumFqgateVersion || '')")"
+          test -n "$minimum_version"
+          echo "version=$minimum_version" >> "$GITHUB_OUTPUT"
       - name: 更新 MCP Apps 版本
         env:
-          MINIMUM_FQGATE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.minimum_fqgate_version || '1.0.3' }}
+          MINIMUM_FQGATE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.minimum_fqgate_version || steps.minimum-fqgate.outputs.version }}
         run: >-
           node AI-plugins/ui-apps/scripts/prepare-mcp-apps-version.mjs
           --version "${{ steps.version.outputs.version }}"
