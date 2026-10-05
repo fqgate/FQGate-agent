@@ -6,6 +6,9 @@ export interface PreviewSourceOption {
   id: string;
   label: string;
   depthMode: PreviewSourceDepthMode;
+  /** 宿主依据数据源能力标记资讯是否可用；旧宿主缺省时保持兼容。 */
+  supportsInformation?: boolean;
+  disabled?: boolean;
 }
 
 export interface PreviewSourceContext {
@@ -26,7 +29,13 @@ export function readPreviewSourceContext(
     const id = stringValue(source.id);
     const label = stringValue(source.label);
     if (!id || !label) return [];
-    return [{ id, label, depthMode: depthMode(source.depthMode) }];
+    return [{
+      id,
+      label,
+      depthMode: depthMode(source.depthMode),
+      ...(source.supportsInformation === false ? { supportsInformation: false } : {}),
+      ...(source.disabled === true ? { disabled: true } : {}),
+    }];
   });
   const selectedInstanceId = stringValue(value.selectedInstanceId) ?? "";
   if (sources.length === 0 || !sources.some(({ id }) => id === selectedInstanceId)) {
@@ -41,6 +50,20 @@ export function requestPreviewSourceSelection(instanceId: string): void {
     { type: "fqgate.preview.select-source", instanceId },
     "*",
   );
+}
+
+/**
+ * 请求宿主重新创建当前 MCP App 页面。
+ *
+ * MCP App 运行在沙箱 iframe 中，直接调用 location.reload() 会让新页面
+ * 失去宿主创建的 AppBridge。由宿主重建 iframe 才能同时刷新入口数据并
+ * 重新完成 MCP 握手；在没有宿主 iframe 的独立页面中返回 false，由调用方
+ * 继续执行本地数据刷新作为兜底。
+ */
+export function requestHostPageRefresh(): boolean {
+  if (window.parent === window) return false;
+  window.parent.postMessage({ type: "fqgate.app.refresh-page" }, "*");
+  return true;
 }
 
 /** FQGate Desktop 可在 App 工具栏内叠放窗口级动作；其他宿主保持零占位。 */

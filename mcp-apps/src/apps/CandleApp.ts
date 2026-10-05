@@ -43,11 +43,15 @@ import type {
   SecuritySearchService,
 } from "@/shared/contracts";
 import { isLineKlineInterval, klineIntervalLabel } from "@/shared/kline";
-import type { PreviewSourceContext } from "@/shared/previewSource";
+import {
+  requestHostPageRefresh,
+  type PreviewSourceContext,
+} from "@/shared/previewSource";
 import { AppFrame } from "@/ui/AppFrame";
 import { append, button, element, errorText, replace } from "@/ui/dom";
 import {
   matchingSecurityCodes,
+  securityFromMainlandCode,
   securitySearchPattern,
 } from "@/ui/securityCode";
 import { ServiceRecoveryController } from "@/ui/ServiceRecoveryController";
@@ -233,6 +237,7 @@ export class CandleApp {
   }
 
   destroy(): void {
+    this.active = false;
     this.resumeVersion += 1;
     this.stopRealtime();
     this.renderVersion += 1;
@@ -275,8 +280,8 @@ export class CandleApp {
 
     this.securityInput.type = "search";
     this.securityInput.autocomplete = "off";
-    this.securityInput.placeholder = "代码或名称";
-    this.securityInput.setAttribute("aria-label", "证券代码或名称");
+    this.securityInput.placeholder = "股票代码";
+    this.securityInput.setAttribute("aria-label", "股票代码");
     this.securityForm.addEventListener("submit", (event) => {
       event.preventDefault();
       void this.confirmSecurity();
@@ -289,7 +294,10 @@ export class CandleApp {
 
     this.refreshButton.title = "刷新行情";
     this.refreshButton.setAttribute("aria-label", "刷新行情");
-    this.refreshButton.addEventListener("click", () => void this.refreshAll());
+    this.refreshButton.addEventListener("click", () => {
+      if (this.options.previewSource && requestHostPageRefresh()) return;
+      void this.refreshPage();
+    });
     append(
       toolbar,
       brand,
@@ -558,6 +566,18 @@ export class CandleApp {
     await this.loadCandles(true);
   }
 
+  /**
+   * 刷新按钮执行完整的 App 页面刷新语义：清理实时连接和历史分页，
+   * 重新读取入口数据，再恢复当前 App 的实时连接。宿主若支持页面重建
+   * 会同时收到刷新意图；不支持的 AI 工具仍可依靠这段逻辑得到一致结果。
+   */
+  private async refreshPage(): Promise<void> {
+    this.stopRealtime("paused");
+    this.resetHistoryPaging();
+    await this.loadCandles(true);
+    if (this.active) await this.startRealtime();
+  }
+
   private async resumeRealtime(): Promise<void> {
     if (!this.active) return;
     const version = ++this.resumeVersion;
@@ -706,7 +726,7 @@ export class CandleApp {
     this.securityName.textContent = name;
     this.securityCode.textContent = `${this.security.code} · ${marketLabel(this.security.market)}`;
     if (document.activeElement !== this.securityInput) {
-      this.securityInput.value = `${this.security.code} ${name}`;
+      this.securityInput.value = this.security.code;
     }
 
     this.latestPrice.textContent = formatPrice(displayed?.close);
@@ -869,14 +889,18 @@ export class CandleApp {
     this.securitySearchVersion += 1;
     this.securitySearch?.abort();
     this.securityCandidates.hidden = true;
-    this.securityInput.value =
-      `${this.security.code} ${this.security.name || ""}`.trim();
+    this.securityInput.value = this.security.code;
     this.securityInput.blur();
   }
 
   private async confirmSecurity(): Promise<void> {
     const input = this.securityInput.value.trim();
     if (!input) return;
+    const exactSecurity = securityFromMainlandCode(input);
+    if (exactSecurity) {
+      this.changeSecurity(exactSecurity);
+      return;
+    }
     const version = ++this.securitySearchVersion;
     this.securitySearch?.abort();
     const controller = new AbortController();

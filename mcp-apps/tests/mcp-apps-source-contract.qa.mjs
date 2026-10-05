@@ -120,6 +120,29 @@ assert.match(
   /candle-brand__wordmark", "FQGate"/,
   "个股 K 线工具栏品牌必须显示 FQGate 英文名称",
 );
+assert.match(
+  candleSource,
+  /requestHostPageRefresh\(\)[\s\S]*?refreshPage\(\)/,
+  "个股 K 线刷新必须请求宿主页面刷新并执行 App 自身完整刷新",
+);
+const informationAppSource = readFileSync(
+  join(sourceRoot, "apps", "InformationApp.ts"),
+  "utf8",
+);
+assert.match(
+  informationAppSource,
+  /requestHostPageRefresh\(\)[\s\S]*?load\(true\)/,
+  "个股资讯刷新必须复用宿主刷新意图并重新读取数据",
+);
+const previewSourceContext = readFileSync(
+  join(sourceRoot, "shared", "previewSource.ts"),
+  "utf8",
+);
+assert.match(
+  previewSourceContext,
+  /fqgate\.app\.refresh-page/,
+  "MCP App 刷新意图必须使用统一宿主消息合同",
+);
 const candleChartSource = readFileSync(
   join(sourceRoot, "features", "candle", "CandleChartController.ts"),
   "utf8",
@@ -330,7 +353,7 @@ assert.match(
 );
 assert.match(
   marketStyles,
-  /\.order-flow-app\s*\{[\s\S]*?height:\s*100vh[\s\S]*?grid-template-rows:\s*26px minmax\(0, 1fr\)/,
+  /\.order-flow-app\s*\{[\s\S]*?height:\s*100vh[\s\S]*?grid-template-rows:\s*minmax\(0, 1fr\)/,
   "逐笔委托必须填满 MCP App 视口并把剩余高度交给内容区",
 );
 assert.match(
@@ -341,6 +364,11 @@ assert.match(
 const informationSource = readFileSync(
   join(sourceRoot, "apps", "InformationApp.ts"),
   "utf8",
+);
+assert.match(
+  informationSource,
+  /createStandardAppHeader/,
+  "个股资讯必须沿用个股 K 线的数据源账号选择器",
 );
 assert.match(
   informationSource,
@@ -356,6 +384,34 @@ const mcpRuntimeSource = readFileSync(
   join(sourceRoot, "adapters", "mcp-app", "McpAppRuntime.ts"),
   "utf8",
 );
+for (const app of ["market-quotes.ts", "order-flow.ts", "information.ts"]) {
+  const entrySource = readFileSync(join(sourceRoot, "mcp-apps", app), "utf8");
+  assert.match(entrySource, /readPreviewSourceContext/);
+  assert.match(entrySource, /requestPreviewSourceSelection/);
+  assert.match(entrySource, /applyPreviewHostActionInset/);
+}
+for (const [file, label] of [
+  ["MarketQuotesApp.ts", "多股行情"],
+  ["OrderFlowApp.ts", "L2 逐笔委托"],
+]) {
+  const appSource = readFileSync(join(sourceRoot, "apps", file), "utf8");
+  assert.match(appSource, /createStandardAppHeader/, `${label}必须沿用个股 K 线的数据源账号选择器`);
+}
+const previewSourceSelectSource = readFileSync(
+  join(sourceRoot, "ui", "previewSourceSelect.ts"),
+  "utf8",
+);
+assert.match(
+  previewSourceSelectSource,
+  /candle-heading__source-select/,
+  "数据源选择器必须复用个股 K 线的视觉样式",
+);
+const standardHeaderSource = readFileSync(
+  join(sourceRoot, "ui", "standardAppHeader.ts"),
+  "utf8",
+);
+assert.match(standardHeaderSource, /candle-brand__wordmark/, "所有 App 必须复用 FQGate 顶部品牌栏");
+assert.match(standardHeaderSource, /candle-heading__title/, "所有 App 必须复用应用标题胶囊");
 assert.match(
   mcpRuntimeSource,
   /this\.app\.openLink\(\{ url \}\)/,

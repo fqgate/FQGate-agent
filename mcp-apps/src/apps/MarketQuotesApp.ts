@@ -6,11 +6,14 @@ import type {
 } from "@/features/market-quotes/contracts";
 import { marketSecurityKey } from "@/features/market-quotes/contracts";
 import type { MarketSecurity } from "@/shared/contracts";
+import type { PreviewSourceContext } from "@/shared/previewSource";
+import { requestHostPageRefresh } from "@/shared/previewSource";
 import { AppFrame } from "@/ui/AppFrame";
-import { append, element, replace } from "@/ui/dom";
+import { append, button, element, replace } from "@/ui/dom";
 import { direction, formatCompactNumber, formatTime, signed } from "@/ui/format";
 import { ServiceRecoveryController } from "@/ui/ServiceRecoveryController";
 import { createSparkline } from "@/ui/sparkline";
+import { createStandardAppHeader } from "@/ui/standardAppHeader";
 import { VisibilityController } from "@/ui/VisibilityController";
 
 interface QuoteRow extends MarketQuotePatch {
@@ -20,9 +23,14 @@ interface QuoteRow extends MarketQuotePatch {
 
 type SortKey = "name" | "latestPrice" | "changePercent" | "volume" | "amount";
 
+export interface MarketQuotesAppOptions {
+  previewSource?: PreviewSourceContext;
+  onPreviewSourceChange?: (instanceId: string) => void;
+}
+
 export class MarketQuotesApp {
   private readonly frame: AppFrame;
-  private readonly countBadge = element("span", "badge");
+  private readonly refreshButton = button("↻", "icon-button candle-refresh");
   private readonly tableBody = element("tbody");
   private readonly status = element("footer", "status-message", "等待行情数据");
   private readonly visibility: VisibilityController;
@@ -40,21 +48,31 @@ export class MarketQuotesApp {
   constructor(
     host: HTMLElement,
     private readonly service: MarketQuoteService,
-    securities: readonly MarketSecurity[]
+    securities: readonly MarketSecurity[],
+    private readonly options: MarketQuotesAppOptions = {},
   ) {
     this.rows = uniqueSecurities(securities).map(blankRow);
-    this.frame = new AppFrame(host, { realtime: true });
-    const toolbar = element("header", "panel-toolbar");
-    const titleGroup = element("div", "toolbar-group");
-    append(titleGroup, element("h1", "panel-title", "多股行情"), this.countBadge);
-    toolbar.append(titleGroup);
+    this.frame = new AppFrame(host, { realtime: true, statusBar: false });
+    this.frame.root.classList.add("market-quotes-app");
+    const toolbar = createStandardAppHeader({
+      title: "多股行情",
+      previewSource: this.options.previewSource,
+      onPreviewSourceChange: this.options.onPreviewSourceChange,
+    });
+    this.refreshButton.title = "刷新行情";
+    this.refreshButton.setAttribute("aria-label", "刷新行情");
+    this.refreshButton.addEventListener("click", () => {
+      if (this.options.previewSource && requestHostPageRefresh()) return;
+      void this.load();
+    });
+    toolbar.actions.append(this.refreshButton);
 
     const scroll = element("div", "table-scroll quote-table-scroll");
     const table = element("table", "data-table quote-table");
     table.setAttribute("aria-label", "多股实时行情");
     append(table, this.createHeader(), this.tableBody);
     scroll.append(table);
-    append(this.frame.content, toolbar, scroll, this.status);
+    append(this.frame.content, toolbar.root, scroll, this.status);
     this.render();
 
     this.recovery = new ServiceRecoveryController(service, {
@@ -111,6 +129,8 @@ export class MarketQuotesApp {
     const controller = new AbortController();
     this.request = controller;
     this.pending.clear();
+    this.refreshButton.disabled = true;
+    this.refreshButton.classList.add("is-spinning");
     this.frame.setBusy(this.rows.every((row) => row.latestPrice === undefined), "正在读取实时行情…");
     this.setConnection("reconnecting", "正在连接实时行情");
     this.status.textContent = "正在读取行情快照…";
@@ -145,7 +165,11 @@ export class MarketQuotesApp {
         this.status.classList.add("is-error");
       }
     } finally {
-      if (epoch === this.loadEpoch) this.frame.setBusy(false);
+      if (epoch === this.loadEpoch) {
+        this.frame.setBusy(false);
+        this.refreshButton.disabled = false;
+        this.refreshButton.classList.remove("is-spinning");
+      }
     }
   }
 
@@ -214,7 +238,6 @@ export class MarketQuotesApp {
   }
 
   private render(): void {
-    this.countBadge.textContent = `${this.rows.length} 只`;
     const rows = [...this.rows];
     if (this.sortKey) rows.sort((left, right) => compareRows(left, right, this.sortKey!) * this.sortDirection);
     replace(this.tableBody);

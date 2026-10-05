@@ -267,10 +267,26 @@
 }
 
 .information-feed {
-  height: 500px;
+  height: auto;
   min-height: 0;
   overflow: auto;
   scrollbar-gutter: stable;
+}
+.information-app,
+.market-quotes-app {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.information-app .app-frame__content,
+.market-quotes-app .app-frame__content {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: 50px minmax(0, 1fr) 25px;
 }
 .information-list {
   margin: 0;
@@ -346,7 +362,8 @@
   gap: 7px;
 }
 .quote-table-scroll {
-  height: 500px;
+  height: auto;
+  min-height: 0;
 }
 .quote-table {
   min-width: 1160px;
@@ -384,12 +401,12 @@
   height: 100vh;
   min-height: 0;
   overflow: hidden;
-  grid-template-rows: 26px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 .order-flow-app .app-frame__content {
   display: grid;
   min-height: 0;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: 50px auto minmax(0, 1fr) auto;
 }
 .order-flow-price {
   font-size: 16px;
@@ -632,6 +649,16 @@
   cursor: pointer;
   font-size: 10px;
   text-overflow: ellipsis;
+  color-scheme: light;
+}
+.candle-heading__source-select option {
+  color: var(--fg-primary);
+  background-color: var(--bg-surface);
+}
+@media (prefers-color-scheme: dark) {
+  .candle-heading__source-select {
+    color-scheme: dark;
+  }
 }
 .candle-heading__source-select:hover {
   color: var(--fg-primary);
@@ -649,6 +676,12 @@
 .candle-statusbar__spacer {
   min-width: 4px;
   flex: 1;
+}
+.candle-toolbar__actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
 }
 .candle-search {
   position: relative;
@@ -803,6 +836,16 @@
   min-width: 76px;
   padding: 0 6px;
   cursor: pointer;
+  color-scheme: light;
+}
+.candle-select option {
+  color: var(--fg-primary);
+  background-color: var(--bg-surface);
+}
+@media (prefers-color-scheme: dark) {
+  .candle-select {
+    color-scheme: dark;
+  }
 }
 .candle-market-workspace {
   display: grid;

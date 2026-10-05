@@ -56,7 +56,7 @@ export class McpFqgateFetch {
     private readonly runtime: McpAppRuntime,
     initialSnapshot: OriginatingToolSnapshot = runtime.getOriginatingToolSnapshot()
   ) {
-    this.instanceId = stringValue(initialSnapshot.arguments?.instanceId);
+    this.instanceId = originatingInstanceId(initialSnapshot.arguments);
     if (initialSnapshot.name) {
       this.initialResult = {
         toolName: initialSnapshot.name,
@@ -188,6 +188,14 @@ function toToolArguments(value: JsonObject): JsonObject {
 function withInstanceId(value: JsonObject, instanceId: string | undefined): JsonObject {
   if (!instanceId || stringValue(value.instanceId)) return value;
   return { ...value, instanceId };
+}
+
+/** 旧宿主可能只传预览上下文；兼容其中已选的数据源实例，避免多账号时丢失路由。 */
+function originatingInstanceId(argumentsValue: JsonObject | undefined): string | undefined {
+  const direct = stringValue(argumentsValue?.instanceId);
+  if (direct) return direct;
+  const preview = argumentsValue?._fqgatePreview;
+  return isJsonObject(preview) ? stringValue(preview.selectedInstanceId) : undefined;
 }
 
 function stringValue(value: unknown): string | undefined {

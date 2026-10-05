@@ -8,13 +8,20 @@ import type {
   OrderFlowWatchListener,
   OrderFlowWatchService
 } from "@/shared/contracts";
+import type { PreviewSourceContext } from "@/shared/previewSource";
 import { AppFrame } from "@/ui/AppFrame";
 import { append, button, element, errorText, replace } from "@/ui/dom";
 import { direction, formatCompactNumber, formatTime } from "@/ui/format";
 import { ServiceRecoveryController } from "@/ui/ServiceRecoveryController";
+import { createStandardAppHeader } from "@/ui/standardAppHeader";
 import { VisibilityController } from "@/ui/VisibilityController";
 
 type PanelState = "idle" | "connecting" | "connected" | "paused" | "reconnecting" | "error";
+
+export interface OrderFlowAppOptions {
+  previewSource?: PreviewSourceContext;
+  onPreviewSourceChange?: (instanceId: string) => void;
+}
 
 export class OrderFlowApp {
   private readonly frame: AppFrame;
@@ -36,7 +43,7 @@ export class OrderFlowApp {
   private readonly visibility: VisibilityController;
 
   private selected?: MarketSecurity;
-  private options: MarketSecurity[] = [];
+  private securityOptions: MarketSecurity[] = [];
   private state: PanelState = "idle";
   private dataMode?: OrderFlowDataMode;
   private quote?: OrderFlowQuote;
@@ -51,10 +58,16 @@ export class OrderFlowApp {
   private searchTimer?: number;
   private active = false;
 
-  constructor(host: HTMLElement, private readonly service: OrderFlowWatchService, initial?: MarketSecurity) {
+  constructor(
+    host: HTMLElement,
+    private readonly service: OrderFlowWatchService,
+    initial?: MarketSecurity,
+    private readonly appOptions: OrderFlowAppOptions = {},
+  ) {
     this.selected = initial;
-    this.options = initial ? [initial] : [];
-    this.frame = new AppFrame(host, { realtime: true });
+    this.securityOptions = initial ? [initial] : [];
+    // 标准栏已经承载应用级信息，避免再插入一层旧版状态栏导致内容被推到视口外。
+    this.frame = new AppFrame(host, { realtime: true, statusBar: false });
     this.frame.root.classList.add("order-flow-app");
     this.buildLayout();
     this.bindControls();
@@ -84,12 +97,15 @@ export class OrderFlowApp {
   }
 
   private buildLayout(): void {
-    const header = element("header", "panel-toolbar order-flow-header");
-    const identity = element("div", "toolbar-group");
-    append(identity, element("h1", "panel-title", "L2 · 逐笔委托"), this.securityBadge);
+    const header = createStandardAppHeader({
+      title: "L2 · 逐笔委托",
+      previewSource: this.appOptions.previewSource,
+      onPreviewSourceChange: this.appOptions.onPreviewSourceChange,
+    });
+    header.heading.append(this.securityBadge);
     const quote = element("div", "toolbar-group");
     append(quote, element("span", "subtle", "当前价"), this.price, this.modeBadge);
-    append(header, identity, quote);
+    header.actions.append(quote);
 
     const controls = element("section", "order-flow-controls");
     const search = element("div", "search-box");
@@ -126,7 +142,7 @@ export class OrderFlowApp {
       this.createStreamCard("挂单", this.orderCount, this.ordersBody, false),
       this.createStreamCard("撤单", this.cancelCount, this.cancelsBody, true)
     );
-    append(this.frame.content, header, controls, grid, this.message);
+    append(this.frame.content, header.root, controls, grid, this.message);
   }
 
   private createStreamCard(
@@ -187,7 +203,7 @@ export class OrderFlowApp {
     try {
       const options = await this.service.searchSecurities(pattern, controller.signal);
       if (revision !== this.searchRevision) return;
-      this.options = options;
+      this.securityOptions = options;
       this.renderSearchResults(options);
     } catch (error) {
       if (controller.signal.aborted || revision !== this.searchRevision) return;

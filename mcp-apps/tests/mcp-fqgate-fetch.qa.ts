@@ -93,6 +93,30 @@ assert.deepEqual(runtime.lastArguments, {
   instanceId: "tonghuashun-default"
 });
 
+const previewRuntime = new FakeRuntime(
+  {
+    name: "fqgate_bar_series",
+    arguments: {
+      ...requestArguments,
+      _fqgatePreview: { selectedInstanceId: "tonghuashun-preview" }
+    }
+  },
+  toolResult
+);
+const previewBridge = new McpFqgateFetch(
+  previewRuntime as unknown as McpAppRuntime
+);
+await previewBridge.fetch("http://127.0.0.1:17281/v2/market/bars", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify(requestArguments)
+});
+assert.equal(
+  previewRuntime.lastArguments?.instanceId,
+  "tonghuashun-preview",
+  "旧宿主只提供预览上下文时仍应路由到选中的数据源实例"
+);
+
 const expectedMappings = new Map([
   ["POST /v2/market/bars", "fqgate_bar_series"],
   ["POST /v2/market/intraday", "fqgate_intraday_series"],

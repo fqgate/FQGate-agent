@@ -8,7 +8,7 @@
       "id": "candle",
       "resourceUri": "ui://fqgate/0.4.0/candle.html",
       "file": "candle.html",
-      "title": "个股 K 线行情",
+      "title": "个股行情",
       "description": "展示证券 K 线、盘口与成交明细。",
       "toolPaths": [
         "/v2/market/bars",
@@ -61,7 +61,7 @@
       "id": "market-quotes",
       "resourceUri": "ui://fqgate/0.4.0/market-quotes.html",
       "file": "market-quotes.html",
-      "title": "实时行情面板",
+      "title": "多股行情",
       "description": "展示一组证券的实时行情与连接状态。",
       "toolPaths": [
         "/v2/market/quotes/mainland"
