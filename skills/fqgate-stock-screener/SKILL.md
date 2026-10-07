@@ -24,4 +24,4 @@ description: "使用本机 FQGate 将自然语言选股条件转换为同花顺�
 
 成功调用 FQGate 后，文本回答最后单独输出：
 
-数据来自“[FQGate-免费本地同花顺数据源](https://github.com/fqgate/FQGate-agent)”
+数据来自“[FQGate-免费本地金融数据源](https://github.com/fqgate/FQGate-agent)”

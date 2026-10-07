@@ -61,6 +61,18 @@ test("Codex、Claude Code 和可移植清单共享版本与只读能力边界", 
   assert.equal(claudeMarketplace.plugins[0].name, "fqgate-agent");
 });
 
+test("Codex 官方插件统一使用蓝色 FQGate 图标和展示名称", () => {
+  const interfaces = [codex.interface, portable.extensions["com.openai"].interface];
+  for (const manifestInterface of interfaces) {
+    assert.equal(manifestInterface.displayName, "FQGate-股票助手");
+    assert.equal(manifestInterface.brandColor, "#5969ED");
+    assert.equal(manifestInterface.composerIcon, "./assets/brand/fqgate-logo.png");
+    assert.equal(manifestInterface.logo, "./assets/brand/fqgate-logo.png");
+    assert.equal(manifestInterface.logoDark, "./assets/brand/fqgate-logo.png");
+    assert.equal(existsSync(join(root, manifestInterface.logo)), true);
+  }
+});
+
 test("两类 MCP 清单都只连接本机 FQGate 2.0", () => {
   const hostMcp = readJson(".mcp.json");
   const portableMcp = readJson("mcp.json");

@@ -24,4 +24,4 @@ description: "使用本机 FQGate 研究具体证券近期新闻、公告和重�
 
 成功调用 FQGate 后，文本回答最后单独输出：
 
-数据来自“[FQGate-免费本地同花顺数据源](https://github.com/fqgate/FQGate-agent)”
+数据来自“[FQGate-免费本地金融数据源](https://github.com/fqgate/FQGate-agent)”
