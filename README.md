@@ -135,10 +135,10 @@ FQGate 默认只监听当前电脑的本机地址，Agent 不会连接公网或�
 - QQ 群：[免费 AI 量化数据](https://qm.qq.com/q/ZQSuiYQZ4Q)，群号：`14546787`
 - 问题反馈：[GitHub Issues](https://github.com/fqgate/FQGate-agent/issues)
 
-微信群二维码会定期失效；当前二维码标注为 2026 年 10 月 10 日前有效。如果下方二维码无法使用，请先加入 QQ 群或提交 Issue 提醒维护者更新。
+微信群二维码会定期失效；当前二维码标注为 2026 年 10 月 17 日前有效。如果下方二维码无法使用，请先加入 QQ 群或提交 Issue 提醒维护者更新。
 
 <p align="center">
-  <img src="./assets/community/wechat-agent-group-qr.png" alt="FQGate 平民量化数据网关交流 2 微信群二维码，有效期至 2026 年 10 月 10 日" width="320">
+  <img src="./assets/community/wechat-agent-group-qr.png" alt="FQGate 平民量化数据网关交流 2 微信群二维码，有效期至 2026 年 10 月 17 日" width="320">
 </p>
 
 ## 支持项目
