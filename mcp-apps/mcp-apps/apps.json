@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "component": "fqgate-mcp-apps",
-  "bundleVersion": "0.4.0",
+  "bundleVersion": "0.4.1",
   "minimumFqgateVersion": "2.0.0",
   "apps": [
     {
       "id": "candle",
-      "resourceUri": "ui://fqgate/0.4.0/candle.html",
+      "resourceUri": "ui://fqgate/0.4.1/candle.html",
       "file": "candle.html",
       "title": "个股行情",
       "description": "展示证券 K 线、盘口与成交明细。",
@@ -37,7 +37,7 @@
     },
     {
       "id": "information",
-      "resourceUri": "ui://fqgate/0.4.0/information.html",
+      "resourceUri": "ui://fqgate/0.4.1/information.html",
       "file": "information.html",
       "title": "个股资讯",
       "description": "展示指定证券的资讯列表、分类和阅读入口。",
@@ -59,7 +59,7 @@
     },
     {
       "id": "market-quotes",
-      "resourceUri": "ui://fqgate/0.4.0/market-quotes.html",
+      "resourceUri": "ui://fqgate/0.4.1/market-quotes.html",
       "file": "market-quotes.html",
       "title": "多股行情",
       "description": "展示一组证券的实时行情与连接状态。",
@@ -85,7 +85,7 @@
     },
     {
       "id": "order-flow",
-      "resourceUri": "ui://fqgate/0.4.0/order-flow.html",
+      "resourceUri": "ui://fqgate/0.4.1/order-flow.html",
       "file": "order-flow.html",
       "title": "L2 - 逐笔委托",
       "description": "展示 Level-2 逐笔委托与撤单数据。",

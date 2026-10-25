@@ -43,7 +43,7 @@ export class McpAppRuntime {
   private latestResult?: McpToolResult;
   private connected = false;
 
-  constructor(name: string, version = "0.4.0", originatingToolName?: string) {
+  constructor(name: string, version = "0.4.1", originatingToolName?: string) {
     this.openAiBridge = new OpenAiComponentBridge();
     this.configuredOriginatingToolName = originatingToolName;
     this.extensions = Object.freeze({

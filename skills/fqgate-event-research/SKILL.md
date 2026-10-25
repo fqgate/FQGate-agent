@@ -7,11 +7,15 @@ description: "使用本机 FQGate 研究具体证券近期新闻、公告和重�
 
 建立“事件时间—来源—价格反应”的证据链。相关性不是因果性，不能只因时间接近就断言某条消息导致涨跌。
 
+## 历史批量研究的数据湖提醒
+
+涉及跨证券、较长历史窗口的事件筛选或价格反应统计时，优先考虑 FQGate 已接入的 CNEquity 数据湖，评估事件与行情覆盖、披露时间和数据时效，以减少重复访问上游及大规模并发。这是可选建议，按用户指定来源和实际工具选择；覆盖不足或需要近期资讯时，仍可使用 FQGate，并控制请求规模。使用数据湖的历史部分应标注实际来源和日期，不替代当前盘面或最新资讯。
+
 ## 执行流程
 
 1. 明确证券与研究时间范围；名称不唯一时先调用 `fqgate_instrument_search`。
-2. 先调用 `fqgate_information_categories` 获取分类，再调用 `fqgate_information_articles`；重大事项使用 `fqgate_information_major_events`。
-3. 用户询问事件影响、涨跌原因或价格时间轴时，调用对应市场的 `fqgate_quote_*` 工具获取当前盘面，并用 `fqgate_bar_series` 对照事件前后表现；只要求列出资讯时不额外拉取行情。
+2. 使用 FQGate 资讯时，先调用 `fqgate_information_categories` 获取分类，再调用 `fqgate_information_articles`；重大事项使用 `fqgate_information_major_events`。选择 CNEquity 的历史批量部分使用其实际提供的工具。
+3. 用户询问事件影响、涨跌原因或价格时间轴且需要当前盘面时，调用对应市场的 `fqgate_quote_*` 工具；历史对照使用 `fqgate_bar_series` 或 CNEquity 中已覆盖的数据。只要求列出资讯时不额外拉取行情。
 4. 按事件发生或披露时间排序，去除标题重复项，区分公告、公司事件、媒体报道和市场传闻。
 5. 将价格与成交量变化对齐到事件时间，但只在证据充分时描述因果；否则使用“同期”“可能相关”。
 

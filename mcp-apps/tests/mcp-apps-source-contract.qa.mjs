@@ -421,7 +421,7 @@ assert.match(
 const config = JSON.parse(
   readFileSync(join(root, "mcp-apps", "apps.json"), "utf8"),
 );
-assert.equal(config.bundleVersion, "0.4.0");
+assert.equal(config.bundleVersion, "0.4.1");
 assert.deepEqual(config.apps.map((app) => app.id).sort(), [
   "candle",
   "information",

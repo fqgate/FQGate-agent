@@ -1,6 +1,6 @@
 {
   "name": "fqgate-plugin-ui",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "FQGate 原生 HTML MCP Apps 界面项目。",
   "type": "module",
@@ -11,7 +11,7 @@
     "build:mcp-apps": "npm run typecheck && node scripts/build-mcp-apps.mjs",
     "dev:publish": "npm run typecheck && node --watch-preserve-output --watch-path=src --watch-path=mcp-apps scripts/dev-publish-mcp-apps.mjs",
     "release:mcp-apps": "node scripts/release-mcp-apps.mjs",
-    "test:mcp-apps": "node tests/mcp-apps-source-contract.qa.mjs && tsx tests/openai-component-bridge.qa.ts && tsx tests/fqgate-http-client.qa.ts && tsx tests/mcp-fqgate-fetch.qa.ts && tsx tests/mcp-polling-connection.qa.ts && tsx tests/market-depth-mode.qa.ts && tsx tests/market-detail-service.qa.ts && tsx tests/information-service.qa.ts && tsx tests/default-candle-interval.qa.ts && tsx tests/candle-history.qa.ts && tsx tests/candle-formatters.qa.ts && tsx tests/security-code.qa.ts && tsx tests/security-search.qa.ts && tsx tests/preview-source.qa.ts && npm run build:mcp-apps && node tests/mcp-apps-build.qa.mjs && node tests/mcp-apps-release.qa.mjs",
+    "test:mcp-apps": "node tests/mcp-apps-source-contract.qa.mjs && tsx tests/security-arguments.qa.ts && tsx tests/openai-component-bridge.qa.ts && tsx tests/fqgate-http-client.qa.ts && tsx tests/mcp-fqgate-fetch.qa.ts && tsx tests/mcp-polling-connection.qa.ts && tsx tests/market-depth-mode.qa.ts && tsx tests/market-detail-service.qa.ts && tsx tests/information-service.qa.ts && tsx tests/default-candle-interval.qa.ts && tsx tests/candle-history.qa.ts && tsx tests/candle-formatters.qa.ts && tsx tests/security-code.qa.ts && tsx tests/security-search.qa.ts && tsx tests/preview-source.qa.ts && npm run build:mcp-apps && node tests/mcp-apps-build.qa.mjs && node tests/mcp-apps-release.qa.mjs",
     "test:security-code": "tsx tests/security-code.qa.ts",
     "test:candle-default": "tsx tests/default-candle-interval.qa.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
